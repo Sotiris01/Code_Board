@@ -35,5 +35,5 @@ dist/
 build/
 
 # Explicitly Track
-!GEMINI.md
-!*.tex
+GEMINI.md
+*.tex
