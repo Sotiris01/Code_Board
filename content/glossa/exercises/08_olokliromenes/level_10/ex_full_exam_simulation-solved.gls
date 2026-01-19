@@ -1,0 +1,237 @@
+ΠΡΟΓΡΑΜΜΑ ΠροσομοίωσηΕξετάσεων
+! Ολοκληρωμένη άσκηση τύπου Πανελληνίων
+! Θέμα: Διαχείριση εργαζομένων εταιρείας με μισθοδοσία
+
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: N, i, choice, years[100], countHigh, countLow
+    ΠΡΑΓΜΑΤΙΚΕΣ: salaries[100], bonus[100], totalSalary, avgSalary, maxSal, minSal
+    ΧΑΡΑΚΤΗΡΕΣ: names[100], departments[100], searchName, searchDept
+    ΛΟΓΙΚΕΣ: found
+
+ΑΡΧΗ
+    ΓΡΑΨΕ 'ΣΥΣΤΗΜΑ ΔΙΑΧΕΙΡΙΣΗΣ ΕΡΓΑΖΟΜΕΝΩΝ'
+    ΓΡΑΨΕ '================================'
+    ΓΡΑΨΕ 'Πόσους εργαζόμενους θα καταχωρήσεις (max 100);'
+    ΔΙΑΒΑΣΕ N
+
+    ! Εισαγωγή δεδομένων
+    ΓΙΑ i ΑΠΟ 1 ΜΕΧΡΙ N
+        ΓΡΑΨΕ '--- Εργαζόμενος ', i, ' ---'
+        ΓΡΑΨΕ 'Ονοματεπώνυμο:'
+        ΔΙΑΒΑΣΕ names[i]
+        ΓΡΑΨΕ 'Τμήμα:'
+        ΔΙΑΒΑΣΕ departments[i]
+        ΓΡΑΨΕ 'Βασικός μισθός:'
+        ΔΙΑΒΑΣΕ salaries[i]
+        ΓΡΑΨΕ 'Έτη προϋπηρεσίας:'
+        ΔΙΑΒΑΣΕ years[i]
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+
+    ! Υπολογισμός bonus
+    ΚΑΛΕΣΕ YpologismosBonus(salaries, years, bonus, N)
+
+    ! Μενού
+    ΑΡΧΗ_ΕΠΑΝΑΛΗΨΗΣ
+        ΓΡΑΨΕ ''
+        ΓΡΑΨΕ '=== ΜΕΝΟΥ ==='
+        ΓΡΑΨΕ '1. Εμφάνιση όλων των εργαζομένων'
+        ΓΡΑΨΕ '2. Αναζήτηση κατά όνομα'
+        ΓΡΑΨΕ '3. Εργαζόμενοι τμήματος'
+        ΓΡΑΨΕ '4. Μισθολογική κατάσταση (ταξινομημένη)'
+        ΓΡΑΨΕ '5. Στατιστικά'
+        ΓΡΑΨΕ '0. Έξοδος'
+        ΔΙΑΒΑΣΕ choice
+
+        ΕΠΙΛΕΞΕ choice
+            ΠΕΡΙΠΤΩΣΗ 1
+                ΚΑΛΕΣΕ EmfanisiOlon(names, departments, salaries, bonus, years, N)
+            ΠΕΡΙΠΤΩΣΗ 2
+                ΓΡΑΨΕ 'Όνομα για αναζήτηση:'
+                ΔΙΑΒΑΣΕ searchName
+                ΚΑΛΕΣΕ AnazitisiOnoma(names, departments, salaries, bonus, years, N, searchName)
+            ΠΕΡΙΠΤΩΣΗ 3
+                ΓΡΑΨΕ 'Όνομα τμήματος:'
+                ΔΙΑΒΑΣΕ searchDept
+                ΚΑΛΕΣΕ EmfanisiTmimatos(names, departments, salaries, N, searchDept)
+            ΠΕΡΙΠΤΩΣΗ 4
+                ΚΑΛΕΣΕ TaksinomimeniEmfanisi(names, salaries, bonus, N)
+            ΠΕΡΙΠΤΩΣΗ 5
+                totalSalary <- SynolikHMisthodisia(salaries, bonus, N)
+                avgSalary <- MesosMisthos(salaries, bonus, N)
+                maxSal <- MegistosMisthos(salaries, bonus, N)
+                minSal <- ElaxistosMisthos(salaries, bonus, N)
+                countHigh <- MetrisiPanoApoOrio(salaries, bonus, N, 1500)
+                
+                ΓΡΑΨΕ '=== ΣΤΑΤΙΣΤΙΚΑ ==='
+                ΓΡΑΨΕ 'Συνολική μισθοδοσία: ', totalSalary
+                ΓΡΑΨΕ 'Μέσος μισθός: ', avgSalary
+                ΓΡΑΨΕ 'Υψηλότερος μισθός: ', maxSal
+                ΓΡΑΨΕ 'Χαμηλότερος μισθός: ', minSal
+                ΓΡΑΨΕ 'Εργαζόμενοι με μισθό > 1500: ', countHigh
+        ΤΕΛΟΣ_ΕΠΙΛΟΓΩΝ
+    ΜΕΧΡΙΣ_ΟΤΟΥ choice = 0
+ΤΕΛΟΣ_ΠΡΟΓΡΑΜΜΑΤΟΣ
+
+ΔΙΑΔΙΚΑΣΙΑ YpologismosBonus(sal[100], yrs[100], bon[100], plithos)
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: k
+ΑΡΧΗ
+    ΓΙΑ k ΑΠΟ 1 ΜΕΧΡΙ plithos
+        ΑΝ yrs[k] > 5 ΤΟΤΕ
+            bon[k] <- sal[k] * 0.10
+        ΑΛΛΙΩΣ
+            bon[k] <- sal[k] * 0.05
+        ΤΕΛΟΣ_ΑΝ
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+ΤΕΛΟΣ_ΔΙΑΔΙΚΑΣΙΑΣ
+
+ΔΙΑΔΙΚΑΣΙΑ EmfanisiOlon(nm[100], dep[100], sal[100], bon[100], yrs[100], plithos)
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: k
+    ΠΡΑΓΜΑΤΙΚΕΣ: totalPay
+ΑΡΧΗ
+    ΓΡΑΨΕ '=== ΛΙΣΤΑ ΕΡΓΑΖΟΜΕΝΩΝ ==='
+    ΓΡΑΨΕ 'Όνομα | Τμήμα | Μισθός | Bonus | Σύνολο | Έτη'
+    ΓΙΑ k ΑΠΟ 1 ΜΕΧΡΙ plithos
+        totalPay <- sal[k] + bon[k]
+        ΓΡΑΨΕ nm[k], ' | ', dep[k], ' | ', sal[k], ' | ', bon[k], ' | ', totalPay, ' | ', yrs[k]
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+ΤΕΛΟΣ_ΔΙΑΔΙΚΑΣΙΑΣ
+
+ΔΙΑΔΙΚΑΣΙΑ AnazitisiOnoma(nm[100], dep[100], sal[100], bon[100], yrs[100], plithos, onoma)
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: k
+    ΠΡΑΓΜΑΤΙΚΕΣ: totalPay
+    ΛΟΓΙΚΕΣ: found
+ΑΡΧΗ
+    found <- ΨΕΥΔΗΣ
+    ΓΙΑ k ΑΠΟ 1 ΜΕΧΡΙ plithos
+        ΑΝ nm[k] = onoma ΤΟΤΕ
+            found <- ΑΛΗΘΗΣ
+            totalPay <- sal[k] + bon[k]
+            ΓΡΑΨΕ '=== ΒΡΕΘΗΚΕ ==='
+            ΓΡΑΨΕ 'Όνομα: ', nm[k]
+            ΓΡΑΨΕ 'Τμήμα: ', dep[k]
+            ΓΡΑΨΕ 'Βασικός μισθός: ', sal[k]
+            ΓΡΑΨΕ 'Bonus: ', bon[k]
+            ΓΡΑΨΕ 'Συνολικές αποδοχές: ', totalPay
+            ΓΡΑΨΕ 'Έτη προϋπηρεσίας: ', yrs[k]
+        ΤΕΛΟΣ_ΑΝ
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+    ΑΝ found = ΨΕΥΔΗΣ ΤΟΤΕ
+        ΓΡΑΨΕ 'Δεν βρέθηκε εργαζόμενος με αυτό το όνομα'
+    ΤΕΛΟΣ_ΑΝ
+ΤΕΛΟΣ_ΔΙΑΔΙΚΑΣΙΑΣ
+
+ΔΙΑΔΙΚΑΣΙΑ EmfanisiTmimatos(nm[100], dep[100], sal[100], plithos, tmima)
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: k, count
+ΑΡΧΗ
+    ΓΡΑΨΕ '=== ΕΡΓΑΖΟΜΕΝΟΙ ΤΜΗΜΑΤΟΣ: ', tmima, ' ==='
+    count <- 0
+    ΓΙΑ k ΑΠΟ 1 ΜΕΧΡΙ plithos
+        ΑΝ dep[k] = tmima ΤΟΤΕ
+            ΓΡΑΨΕ nm[k], ' - Μισθός: ', sal[k]
+            count <- count + 1
+        ΤΕΛΟΣ_ΑΝ
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+    ΓΡΑΨΕ 'Σύνολο εργαζομένων τμήματος: ', count
+ΤΕΛΟΣ_ΔΙΑΔΙΚΑΣΙΑΣ
+
+ΔΙΑΔΙΚΑΣΙΑ TaksinomimeniEmfanisi(nm[100], sal[100], bon[100], plithos)
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: i, j
+    ΠΡΑΓΜΑΤΙΚΕΣ: totalPay[100], tempPay
+    ΧΑΡΑΚΤΗΡΕΣ: tempName
+ΑΡΧΗ
+    ! Αντιγραφή σε προσωρινούς πίνακες για ταξινόμηση
+    ΓΙΑ i ΑΠΟ 1 ΜΕΧΡΙ plithos
+        totalPay[i] <- sal[i] + bon[i]
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+    
+    ! Bubble Sort φθίνουσα
+    ΓΙΑ i ΑΠΟ 1 ΜΕΧΡΙ plithos - 1
+        ΓΙΑ j ΑΠΟ 1 ΜΕΧΡΙ plithos - i
+            ΑΝ totalPay[j] < totalPay[j + 1] ΤΟΤΕ
+                ! Αντιμετάθεση
+                tempPay <- totalPay[j]
+                totalPay[j] <- totalPay[j + 1]
+                totalPay[j + 1] <- tempPay
+                
+                tempName <- nm[j]
+                nm[j] <- nm[j + 1]
+                nm[j + 1] <- tempName
+            ΤΕΛΟΣ_ΑΝ
+        ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+    
+    ΓΡΑΨΕ '=== ΜΙΣΘΟΛΟΓΙΚΗ ΚΑΤΑΣΤΑΣΗ (ΦΘΙΝΟΥΣΑ) ==='
+    ΓΙΑ i ΑΠΟ 1 ΜΕΧΡΙ plithos
+        ΓΡΑΨΕ i, '. ', nm[i], ' - ', totalPay[i], ' ευρώ'
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+ΤΕΛΟΣ_ΔΙΑΔΙΚΑΣΙΑΣ
+
+ΣΥΝΑΡΤΗΣΗ SynolikHMisthodisia(sal[100], bon[100], plithos): ΠΡΑΓΜΑΤΙΚΗ
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: k
+    ΠΡΑΓΜΑΤΙΚΕΣ: sum
+ΑΡΧΗ
+    sum <- 0
+    ΓΙΑ k ΑΠΟ 1 ΜΕΧΡΙ plithos
+        sum <- sum + sal[k] + bon[k]
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+    SynolikHMisthodisia <- sum
+ΤΕΛΟΣ_ΣΥΝΑΡΤΗΣΗΣ
+
+ΣΥΝΑΡΤΗΣΗ MesosMisthos(sal[100], bon[100], plithos): ΠΡΑΓΜΑΤΙΚΗ
+ΜΕΤΑΒΛΗΤΕΣ
+    ΠΡΑΓΜΑΤΙΚΕΣ: total
+ΑΡΧΗ
+    total <- SynolikHMisthodisia(sal, bon, plithos)
+    MesosMisthos <- total / plithos
+ΤΕΛΟΣ_ΣΥΝΑΡΤΗΣΗΣ
+
+ΣΥΝΑΡΤΗΣΗ MegistosMisthos(sal[100], bon[100], plithos): ΠΡΑΓΜΑΤΙΚΗ
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: k
+    ΠΡΑΓΜΑΤΙΚΕΣ: maxVal, currentTotal
+ΑΡΧΗ
+    maxVal <- sal[1] + bon[1]
+    ΓΙΑ k ΑΠΟ 2 ΜΕΧΡΙ plithos
+        currentTotal <- sal[k] + bon[k]
+        ΑΝ currentTotal > maxVal ΤΟΤΕ
+            maxVal <- currentTotal
+        ΤΕΛΟΣ_ΑΝ
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+    MegistosMisthos <- maxVal
+ΤΕΛΟΣ_ΣΥΝΑΡΤΗΣΗΣ
+
+ΣΥΝΑΡΤΗΣΗ ElaxistosMisthos(sal[100], bon[100], plithos): ΠΡΑΓΜΑΤΙΚΗ
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: k
+    ΠΡΑΓΜΑΤΙΚΕΣ: minVal, currentTotal
+ΑΡΧΗ
+    minVal <- sal[1] + bon[1]
+    ΓΙΑ k ΑΠΟ 2 ΜΕΧΡΙ plithos
+        currentTotal <- sal[k] + bon[k]
+        ΑΝ currentTotal < minVal ΤΟΤΕ
+            minVal <- currentTotal
+        ΤΕΛΟΣ_ΑΝ
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+    ElaxistosMisthos <- minVal
+ΤΕΛΟΣ_ΣΥΝΑΡΤΗΣΗΣ
+
+ΣΥΝΑΡΤΗΣΗ MetrisiPanoApoOrio(sal[100], bon[100], plithos, orio): ΑΚΕΡΑΙΑ
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: k, count
+    ΠΡΑΓΜΑΤΙΚΕΣ: currentTotal
+ΑΡΧΗ
+    count <- 0
+    ΓΙΑ k ΑΠΟ 1 ΜΕΧΡΙ plithos
+        currentTotal <- sal[k] + bon[k]
+        ΑΝ currentTotal > orio ΤΟΤΕ
+            count <- count + 1
+        ΤΕΛΟΣ_ΑΝ
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+    MetrisiPanoApoOrio <- count
+ΤΕΛΟΣ_ΣΥΝΑΡΤΗΣΗΣ

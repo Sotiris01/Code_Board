@@ -1,0 +1,20 @@
+{
+  "name": "aepp_board",
+  "version": "1.0.0",
+  "description": "AEPP Board - Collaborative Teaching Board for ΓΛΩΣΣΑ",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "tunnel": "ngrok http 3000",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["education", "greek", "programming", "collaboration"],
+  "author": "Σωτήρης Μπαλατσιάς",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.2.1",
+    "ws": "^8.19.0"
+  }
+}

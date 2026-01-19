@@ -1,0 +1,39 @@
+ΠΡΟΓΡΑΜΜΑ ΑριθμοιFibonacci
+! Υπολογίζει τον n-οστό όρο της ακολουθίας Fibonacci
+
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: n, apotelesma
+
+ΑΡΧΗ
+ΓΡΑΨΕ 'Δώσε τη θέση του όρου Fibonacci (n >= 1):'
+ΔΙΑΒΑΣΕ n
+
+! Κάλεσε τη συνάρτηση Fibonacci
+apotelesma <- Fibonacci(n)
+
+ΓΡΑΨΕ 'Ο ', n, 'ος όρος της ακολουθίας Fibonacci είναι: ', apotelesma
+ΤΕΛΟΣ_ΠΡΟΓΡΑΜΜΑΤΟΣ
+
+! Συνάρτηση που υπολογίζει τον n-οστό όρο Fibonacci
+! F(1)=1, F(2)=1, F(n)=F(n-1)+F(n-2)
+ΣΥΝΑΡΤΗΣΗ Fibonacci(pos): ΑΚΕΡΑΙΑ
+
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: prev1, prev2, current, i
+
+ΑΝ pos <= 2 ΤΟΤΕ
+    Fibonacci <- 1
+ΑΛΛΙΩΣ
+    prev1 <- 1
+    prev2 <- 1
+    
+    ΓΙΑ i ΑΠΟ 3 ΜΕΧΡΙ pos
+        current <- prev1 + prev2
+        prev1 <- prev2
+        prev2 <- current
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+    
+    Fibonacci <- current
+ΤΕΛΟΣ_ΑΝ
+
+ΤΕΛΟΣ_ΣΥΝΑΡΤΗΣΗΣ

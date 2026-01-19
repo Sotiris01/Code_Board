@@ -1,0 +1,159 @@
+ΠΡΟΓΡΑΜΜΑ ΣτατιστικήΑνάλυση
+! Πλήρης στατιστική ανάλυση: μέσος όρος, διάμεσος, τυπική απόκλιση
+! Χρησιμοποιεί πολλαπλές συναρτήσεις για κάθε υπολογισμό
+
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: N, i
+    ΠΡΑΓΜΑΤΙΚΕΣ: data[100], mean, median, stdDev, minVal, maxVal, range
+
+ΑΡΧΗ
+    ΓΡΑΨΕ 'Πόσα δεδομένα θα εισάγεις (max 100);'
+    ΔΙΑΒΑΣΕ N
+
+    ! Εισαγωγή δεδομένων
+    ΓΙΑ i ΑΠΟ 1 ΜΕΧΡΙ N
+        ΓΡΑΨΕ 'Τιμή ', i, ':'
+        ΔΙΑΒΑΣΕ data[i]
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+
+    ΓΡΑΨΕ '--- ΑΡΧΙΚΑ ΔΕΔΟΜΕΝΑ ---'
+    ΚΑΛΕΣΕ EmfanisiData(data, N)
+
+    ! Ταξινόμηση για διάμεσο
+    ΚΑΛΕΣΕ Taksinomisi(data, N)
+
+    ΓΡΑΨΕ '--- ΤΑΞΙΝΟΜΗΜΕΝΑ ΔΕΔΟΜΕΝΑ ---'
+    ΚΑΛΕΣΕ EmfanisiData(data, N)
+
+    ! Υπολογισμός στατιστικών μέτρων
+    mean <- MesosOros(data, N)
+    median <- Diamesos(data, N)
+    stdDev <- TipikiApoklisi(data, N)
+    minVal <- Elaxisto(data, N)
+    maxVal <- Megisto(data, N)
+    range <- Evros(data, N)
+
+    ΓΡΑΨΕ ''
+    ΓΡΑΨΕ '=== ΣΤΑΤΙΣΤΙΚΗ ΑΝΑΛΥΣΗ ==='
+    ΓΡΑΨΕ 'Μέσος όρος: ', mean
+    ΓΡΑΨΕ 'Διάμεσος: ', median
+    ΓΡΑΨΕ 'Τυπική απόκλιση: ', stdDev
+    ΓΡΑΨΕ 'Ελάχιστο: ', minVal
+    ΓΡΑΨΕ 'Μέγιστο: ', maxVal
+    ΓΡΑΨΕ 'Εύρος: ', range
+ΤΕΛΟΣ_ΠΡΟΓΡΑΜΜΑΤΟΣ
+
+ΔΙΑΔΙΚΑΣΙΑ EmfanisiData(arr[100], plithos)
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: k
+ΑΡΧΗ
+    ΓΙΑ k ΑΠΟ 1 ΜΕΧΡΙ plithos
+        ΓΡΑΨΕ arr[k], ' '
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+    ΓΡΑΨΕ ''
+ΤΕΛΟΣ_ΔΙΑΔΙΚΑΣΙΑΣ
+
+ΔΙΑΔΙΚΑΣΙΑ Taksinomisi(arr[100], plithos)
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: i, j
+    ΠΡΑΓΜΑΤΙΚΕΣ: temp
+ΑΡΧΗ
+    ΓΙΑ i ΑΠΟ 1 ΜΕΧΡΙ plithos - 1
+        ΓΙΑ j ΑΠΟ 1 ΜΕΧΡΙ plithos - i
+            ΑΝ arr[j] > arr[j + 1] ΤΟΤΕ
+                temp <- arr[j]
+                arr[j] <- arr[j + 1]
+                arr[j + 1] <- temp
+            ΤΕΛΟΣ_ΑΝ
+        ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+ΤΕΛΟΣ_ΔΙΑΔΙΚΑΣΙΑΣ
+
+ΣΥΝΑΡΤΗΣΗ MesosOros(arr[100], plithos): ΠΡΑΓΜΑΤΙΚΗ
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: k
+    ΠΡΑΓΜΑΤΙΚΕΣ: sum
+ΑΡΧΗ
+    sum <- 0
+    ΓΙΑ k ΑΠΟ 1 ΜΕΧΡΙ plithos
+        sum <- sum + arr[k]
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+    MesosOros <- sum / plithos
+ΤΕΛΟΣ_ΣΥΝΑΡΤΗΣΗΣ
+
+ΣΥΝΑΡΤΗΣΗ Diamesos(arr[100], plithos): ΠΡΑΓΜΑΤΙΚΗ
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: mid
+    ΠΡΑΓΜΑΤΙΚΕΣ: result
+ΑΡΧΗ
+    mid <- plithos DIV 2
+    ΑΝ plithos MOD 2 = 1 ΤΟΤΕ
+        ! Περιττός αριθμός στοιχείων
+        result <- arr[mid + 1]
+    ΑΛΛΙΩΣ
+        ! Άρτιος αριθμός στοιχείων
+        result <- (arr[mid] + arr[mid + 1]) / 2
+    ΤΕΛΟΣ_ΑΝ
+    Diamesos <- result
+ΤΕΛΟΣ_ΣΥΝΑΡΤΗΣΗΣ
+
+ΣΥΝΑΡΤΗΣΗ TipikiApoklisi(arr[100], plithos): ΠΡΑΓΜΑΤΙΚΗ
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: k
+    ΠΡΑΓΜΑΤΙΚΕΣ: sum, mean, variance, diff
+ΑΡΧΗ
+    ! Υπολογισμός μέσου όρου
+    sum <- 0
+    ΓΙΑ k ΑΠΟ 1 ΜΕΧΡΙ plithos
+        sum <- sum + arr[k]
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+    mean <- sum / plithos
+    
+    ! Υπολογισμός διακύμανσης
+    variance <- 0
+    ΓΙΑ k ΑΠΟ 1 ΜΕΧΡΙ plithos
+        diff <- arr[k] - mean
+        variance <- variance + diff * diff
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+    variance <- variance / plithos
+    
+    ! Τυπική απόκλιση = τετραγωνική ρίζα διακύμανσης
+    TipikiApoklisi <- Τ_Ρ(variance)
+ΤΕΛΟΣ_ΣΥΝΑΡΤΗΣΗΣ
+
+ΣΥΝΑΡΤΗΣΗ Elaxisto(arr[100], plithos): ΠΡΑΓΜΑΤΙΚΗ
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: k
+    ΠΡΑΓΜΑΤΙΚΕΣ: minVal
+ΑΡΧΗ
+    minVal <- arr[1]
+    ΓΙΑ k ΑΠΟ 2 ΜΕΧΡΙ plithos
+        ΑΝ arr[k] < minVal ΤΟΤΕ
+            minVal <- arr[k]
+        ΤΕΛΟΣ_ΑΝ
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+    Elaxisto <- minVal
+ΤΕΛΟΣ_ΣΥΝΑΡΤΗΣΗΣ
+
+ΣΥΝΑΡΤΗΣΗ Megisto(arr[100], plithos): ΠΡΑΓΜΑΤΙΚΗ
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: k
+    ΠΡΑΓΜΑΤΙΚΕΣ: maxVal
+ΑΡΧΗ
+    maxVal <- arr[1]
+    ΓΙΑ k ΑΠΟ 2 ΜΕΧΡΙ plithos
+        ΑΝ arr[k] > maxVal ΤΟΤΕ
+            maxVal <- arr[k]
+        ΤΕΛΟΣ_ΑΝ
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+    Megisto <- maxVal
+ΤΕΛΟΣ_ΣΥΝΑΡΤΗΣΗΣ
+
+ΣΥΝΑΡΤΗΣΗ Evros(arr[100], plithos): ΠΡΑΓΜΑΤΙΚΗ
+ΜΕΤΑΒΛΗΤΕΣ
+    ΠΡΑΓΜΑΤΙΚΕΣ: minVal, maxVal
+ΑΡΧΗ
+    minVal <- Elaxisto(arr, plithos)
+    maxVal <- Megisto(arr, plithos)
+    Evros <- maxVal - minVal
+ΤΕΛΟΣ_ΣΥΝΑΡΤΗΣΗΣ

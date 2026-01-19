@@ -1,0 +1,79 @@
+ΠΡΟΓΡΑΜΜΑ ΥπολογισμόςΜισθού
+! Υπολογίζει μισθό με υπερωρίες, bonus και κρατήσεις
+! Βασικός μισθός ανά ώρα
+! Υπερωρίες: 1-10 ώρες: +50%, 11-20: +75%, >20: +100%
+! Bonus απόδοσης: Άριστη: +15%, Καλή: +10%, Μέτρια: +5%
+! Κρατήσεις: ΙΚΑ 16%, Φόρος κλιμακωτός
+
+ΜΕΤΑΒΛΗΤΕΣ
+    ΠΡΑΓΜΑΤΙΚΕΣ: misthos_ora, vasikos, yperwries_poso, bonus, miktd
+    ΠΡΑΓΜΑΤΙΚΕΣ: ika, foros, katharος
+    ΑΚΕΡΑΙΕΣ: wres, yperwries, apodosi
+
+ΑΡΧΗ
+    ΓΡΑΨΕ 'Δώσε μισθό ανά ώρα:'
+    ΔΙΑΒΑΣΕ misthos_ora
+    ΓΡΑΨΕ 'Δώσε κανονικές ώρες εργασίας:'
+    ΔΙΑΒΑΣΕ wres
+    ΓΡΑΨΕ 'Δώσε ώρες υπερωρίας:'
+    ΔΙΑΒΑΣΕ yperwries
+    ΓΡΑΨΕ 'Απόδοση (1=Μέτρια, 2=Καλή, 3=Άριστη):'
+    ΔΙΑΒΑΣΕ apodosi
+
+    ! Έλεγχος εγκυρότητας
+    ΑΝ misthos_ora <= 0 Ή wres < 0 Ή yperwries < 0 ΤΟΤΕ
+        ΓΡΑΨΕ 'Μη έγκυρα δεδομένα!'
+    ΑΛΛΙΩΣ
+        ! Βασικός μισθός
+        vasikos <- wres * misthos_ora
+
+        ! Υπολογισμός υπερωριών
+        yperwries_poso <- 0
+        ΑΝ yperwries > 20 ΤΟΤΕ
+            yperwries_poso <- yperwries_poso + (yperwries - 20) * misthos_ora * 2
+            yperwries <- 20
+        ΤΕΛΟΣ_ΑΝ
+        ΑΝ yperwries > 10 ΤΟΤΕ
+            yperwries_poso <- yperwries_poso + (yperwries - 10) * misthos_ora * 1.75
+            yperwries <- 10
+        ΤΕΛΟΣ_ΑΝ
+        ΑΝ yperwries > 0 ΤΟΤΕ
+            yperwries_poso <- yperwries_poso + yperwries * misthos_ora * 1.5
+        ΤΕΛΟΣ_ΑΝ
+
+        ! Bonus απόδοσης
+        ΑΝ apodosi = 3 ΤΟΤΕ
+            bonus <- (vasikos + yperwries_poso) * 0.15
+        ΑΛΛΙΩΣ_ΑΝ apodosi = 2 ΤΟΤΕ
+            bonus <- (vasikos + yperwries_poso) * 0.10
+        ΑΛΛΙΩΣ
+            bonus <- (vasikos + yperwries_poso) * 0.05
+        ΤΕΛΟΣ_ΑΝ
+
+        ! Μικτές αποδοχές
+        mikto <- vasikos + yperwries_poso + bonus
+
+        ! Κρατήσεις
+        ika <- mikto * 0.16
+
+        ! Κλιμακωτός φόρος
+        ΑΝ mikto <= 1000 ΤΟΤΕ
+            foros <- mikto * 0.10
+        ΑΛΛΙΩΣ_ΑΝ mikto <= 2000 ΤΟΤΕ
+            foros <- 100 + (mikto - 1000) * 0.20
+        ΑΛΛΙΩΣ
+            foros <- 300 + (mikto - 2000) * 0.30
+        ΤΕΛΟΣ_ΑΝ
+
+        katharos <- mikto - ika - foros
+
+        ΓΡΑΨΕ '=== ΑΝΑΛΥΣΗ ΜΙΣΘΟΥ ==='
+        ΓΡΑΨΕ 'Βασικός: ', vasikos, '€'
+        ΓΡΑΨΕ 'Υπερωρίες: ', yperwries_poso, '€'
+        ΓΡΑΨΕ 'Bonus: ', bonus, '€'
+        ΓΡΑΨΕ 'Μικτές αποδοχές: ', mikto, '€'
+        ΓΡΑΨΕ 'ΙΚΑ (16%): -', ika, '€'
+        ΓΡΑΨΕ 'Φόρος: -', foros, '€'
+        ΓΡΑΨΕ 'Καθαρός μισθός: ', katharos, '€'
+    ΤΕΛΟΣ_ΑΝ
+ΤΕΛΟΣ_ΠΡΟΓΡΑΜΜΑΤΟΣ

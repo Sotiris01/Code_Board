@@ -1,0 +1,68 @@
+ΠΡΟΓΡΑΜΜΑ ΑσφάλιστροΑυτοκινήτου
+! Υπολογίζει ασφάλιστρο με πολλούς παράγοντες
+! Βασικό: 300€
+! Ηλικία οδηγού: <25: +50%, 25-65: +0%, >65: +30%
+! Χρόνια δίπλωμα: <2: +40%, 2-5: +20%, >5: +0%
+! Κυβικά: <1000: -10%, 1000-1600: +0%, 1600-2000: +20%, >2000: +40%
+! Ατυχήματα: 0: -10%, 1: +0%, 2+: +30%
+
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: ilikia, xronia_diploma, kyvika, atyximata
+    ΠΡΑΓΜΑΤΙΚΕΣ: vasiko, synolo, prosavksisi
+
+ΑΡΧΗ
+    vasiko <- 300
+
+    ΓΡΑΨΕ 'Δώσε ηλικία οδηγού:'
+    ΔΙΑΒΑΣΕ ilikia
+    ΓΡΑΨΕ 'Δώσε χρόνια διπλώματος:'
+    ΔΙΑΒΑΣΕ xronia_diploma
+    ΓΡΑΨΕ 'Δώσε κυβικά αυτοκινήτου:'
+    ΔΙΑΒΑΣΕ kyvika
+    ΓΡΑΨΕ 'Δώσε αριθμό ατυχημάτων τα τελευταία 5 χρόνια:'
+    ΔΙΑΒΑΣΕ atyximata
+
+    ! Έλεγχος εγκυρότητας
+    ΑΝ ilikia < 18 Ή xronia_diploma < 0 Ή kyvika <= 0 Ή atyximata < 0 ΤΟΤΕ
+        ΓΡΑΨΕ 'Μη έγκυρα δεδομένα!'
+    ΑΛΛΙΩΣ
+        synolo <- vasiko
+        prosavksisi <- 0
+
+        ! Παράγοντας ηλικίας
+        ΑΝ ilikia < 25 ΤΟΤΕ
+            prosavksisi <- prosavksisi + 0.50
+        ΑΛΛΙΩΣ_ΑΝ ilikia > 65 ΤΟΤΕ
+            prosavksisi <- prosavksisi + 0.30
+        ΤΕΛΟΣ_ΑΝ
+
+        ! Παράγοντας εμπειρίας
+        ΑΝ xronia_diploma < 2 ΤΟΤΕ
+            prosavksisi <- prosavksisi + 0.40
+        ΑΛΛΙΩΣ_ΑΝ xronia_diploma <= 5 ΤΟΤΕ
+            prosavksisi <- prosavksisi + 0.20
+        ΤΕΛΟΣ_ΑΝ
+
+        ! Παράγοντας κυβικών
+        ΑΝ kyvika < 1000 ΤΟΤΕ
+            prosavksisi <- prosavksisi - 0.10
+        ΑΛΛΙΩΣ_ΑΝ kyvika > 2000 ΤΟΤΕ
+            prosavksisi <- prosavksisi + 0.40
+        ΑΛΛΙΩΣ_ΑΝ kyvika > 1600 ΤΟΤΕ
+            prosavksisi <- prosavksisi + 0.20
+        ΤΕΛΟΣ_ΑΝ
+
+        ! Παράγοντας ατυχημάτων
+        ΑΝ atyximata = 0 ΤΟΤΕ
+            prosavksisi <- prosavksisi - 0.10
+        ΑΛΛΙΩΣ_ΑΝ atyximata >= 2 ΤΟΤΕ
+            prosavksisi <- prosavksisi + 0.30
+        ΤΕΛΟΣ_ΑΝ
+
+        synolo <- vasiko * (1 + prosavksisi)
+
+        ΓΡΑΨΕ 'Βασικό ασφάλιστρο: ', vasiko, '€'
+        ΓΡΑΨΕ 'Προσαύξηση/Έκπτωση: ', prosavksisi * 100, '%'
+        ΓΡΑΨΕ 'Τελικό ασφάλιστρο: ', synolo, '€'
+    ΤΕΛΟΣ_ΑΝ
+ΤΕΛΟΣ_ΠΡΟΓΡΑΜΜΑΤΟΣ

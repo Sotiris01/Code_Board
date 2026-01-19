@@ -1,0 +1,123 @@
+ΠΡΟΓΡΑΜΜΑ ΔυαδικήΑναζήτηση
+! Υλοποιεί δυαδική αναζήτηση σε ταξινομημένο πίνακα
+! Περιλαμβάνει ταξινόμηση πριν την αναζήτηση
+
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: N, i, searchNum, pos, steps
+    ΑΚΕΡΑΙΕΣ: numbers[100]
+    ΧΑΡΑΚΤΗΡΕΣ: choice
+
+ΑΡΧΗ
+    ΓΡΑΨΕ 'Πόσους αριθμούς θα καταχωρήσεις (max 100);'
+    ΔΙΑΒΑΣΕ N
+
+    ! Εισαγωγή αριθμών
+    ΓΙΑ i ΑΠΟ 1 ΜΕΧΡΙ N
+        ΓΡΑΨΕ 'Δώσε αριθμό ', i, ':'
+        ΔΙΑΒΑΣΕ numbers[i]
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+
+    ΓΡΑΨΕ '--- ΑΡΧΙΚΟΣ ΠΙΝΑΚΑΣ ---'
+    ΚΑΛΕΣΕ EmfanisiPinaka(numbers, N)
+
+    ! Πρώτα ταξινόμηση
+    ΚΑΛΕΣΕ Taksinomisi(numbers, N)
+
+    ΓΡΑΨΕ '--- ΤΑΞΙΝΟΜΗΜΕΝΟΣ ΠΙΝΑΚΑΣ ---'
+    ΚΑΛΕΣΕ EmfanisiPinaka(numbers, N)
+
+    ! Αναζήτηση
+    ΑΡΧΗ_ΕΠΑΝΑΛΗΨΗΣ
+        ΓΡΑΨΕ 'Ποιον αριθμό ψάχνεις;'
+        ΔΙΑΒΑΣΕ searchNum
+
+        pos <- DyadikiAnazitisi(numbers, N, searchNum)
+        steps <- VimataAnazitisis(numbers, N, searchNum)
+
+        ΑΝ pos > 0 ΤΟΤΕ
+            ΓΡΑΨΕ 'Βρέθηκε στη θέση ', pos
+        ΑΛΛΙΩΣ
+            ΓΡΑΨΕ 'Δεν βρέθηκε'
+        ΤΕΛΟΣ_ΑΝ
+        ΓΡΑΨΕ 'Βήματα αναζήτησης: ', steps
+
+        ΓΡΑΨΕ 'Νέα αναζήτηση; (Ν/Ο)'
+        ΔΙΑΒΑΣΕ choice
+    ΜΕΧΡΙΣ_ΟΤΟΥ choice = 'Ο' Η choice = 'ο'
+ΤΕΛΟΣ_ΠΡΟΓΡΑΜΜΑΤΟΣ
+
+ΔΙΑΔΙΚΑΣΙΑ EmfanisiPinaka(arr[100], plithos)
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: k
+ΑΡΧΗ
+    ΓΙΑ k ΑΠΟ 1 ΜΕΧΡΙ plithos
+        ΓΡΑΨΕ arr[k], ' '
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+    ΓΡΑΨΕ ''
+ΤΕΛΟΣ_ΔΙΑΔΙΚΑΣΙΑΣ
+
+ΔΙΑΔΙΚΑΣΙΑ Taksinomisi(arr[100], plithos)
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: i, j, temp
+ΑΡΧΗ
+    ! Bubble Sort
+    ΓΙΑ i ΑΠΟ 1 ΜΕΧΡΙ plithos - 1
+        ΓΙΑ j ΑΠΟ 1 ΜΕΧΡΙ plithos - i
+            ΑΝ arr[j] > arr[j + 1] ΤΟΤΕ
+                temp <- arr[j]
+                arr[j] <- arr[j + 1]
+                arr[j + 1] <- temp
+            ΤΕΛΟΣ_ΑΝ
+        ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+ΤΕΛΟΣ_ΔΙΑΔΙΚΑΣΙΑΣ
+
+ΣΥΝΑΡΤΗΣΗ DyadikiAnazitisi(arr[100], plithos, target): ΑΚΕΡΑΙΑ
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: left, right, mid, thesi
+    ΛΟΓΙΚΕΣ: found
+ΑΡΧΗ
+    left <- 1
+    right <- plithos
+    found <- ΨΕΥΔΗΣ
+    thesi <- 0
+    
+    ΟΣΟ left <= right ΚΑΙ found = ΨΕΥΔΗΣ ΕΠΑΝΑΛΑΒΕ
+        mid <- (left + right) DIV 2
+        ΑΝ arr[mid] = target ΤΟΤΕ
+            thesi <- mid
+            found <- ΑΛΗΘΗΣ
+        ΑΛΛΙΩΣ_ΑΝ arr[mid] < target ΤΟΤΕ
+            left <- mid + 1
+        ΑΛΛΙΩΣ
+            right <- mid - 1
+        ΤΕΛΟΣ_ΑΝ
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+    
+    DyadikiAnazitisi <- thesi
+ΤΕΛΟΣ_ΣΥΝΑΡΤΗΣΗΣ
+
+ΣΥΝΑΡΤΗΣΗ VimataAnazitisis(arr[100], plithos, target): ΑΚΕΡΑΙΑ
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: left, right, mid, count
+    ΛΟΓΙΚΕΣ: found
+ΑΡΧΗ
+    left <- 1
+    right <- plithos
+    found <- ΨΕΥΔΗΣ
+    count <- 0
+    
+    ΟΣΟ left <= right ΚΑΙ found = ΨΕΥΔΗΣ ΕΠΑΝΑΛΑΒΕ
+        count <- count + 1
+        mid <- (left + right) DIV 2
+        ΑΝ arr[mid] = target ΤΟΤΕ
+            found <- ΑΛΗΘΗΣ
+        ΑΛΛΙΩΣ_ΑΝ arr[mid] < target ΤΟΤΕ
+            left <- mid + 1
+        ΑΛΛΙΩΣ
+            right <- mid - 1
+        ΤΕΛΟΣ_ΑΝ
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+    
+    VimataAnazitisis <- count
+ΤΕΛΟΣ_ΣΥΝΑΡΤΗΣΗΣ

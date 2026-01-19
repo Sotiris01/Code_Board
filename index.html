@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Board - Πίνακας Διδασκαλίας ΓΛΩΣΣΑΣ</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="styles.css?v=39">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <!-- PDF.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        // Configure PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header / Toolbar -->
+        <header class="toolbar">
+            <div class="toolbar-left">
+                <h1 class="app-title">📝 Code Board</h1>
+                <span class="subtitle">Πίνακας Διδασκαλίας ΓΛΩΣΣΑΣ</span>
+                
+                <!-- Mode Toggle Buttons -->
+                <div class="mode-toggle">
+                    <button id="mode-code" class="btn btn-mode active" title="Επεξεργαστής Κώδικα">
+                        <span class="btn-icon">💻</span>
+                        <span class="btn-text">Κώδικας</span>
+                    </button>
+                    <button id="mode-pdf" class="btn btn-mode" title="Προβολή PDF">
+                        <span class="btn-icon">📄</span>
+                        <span class="btn-text">PDF</span>
+                    </button>
+                </div>
+                
+                <!-- Language Selector -->
+                <div class="language-selector-container">
+                    <label for="language-selector" class="language-label">Γλώσσα:</label>
+                    <select id="language-selector" class="language-selector" title="Επιλογή γλώσσας προγραμματισμού">
+                        <option value="glossa" selected>ΓΛΩΣΣΑ</option>
+                        <!-- Future languages will be added dynamically -->
+                    </select>
+                </div>
+            </div>
+            <div class="toolbar-center">
+                <!-- PDF Controls (hidden by default) -->
+                <div class="pdf-controls" id="pdf-controls" style="display: none;">
+                    <label class="btn btn-tool pdf-load-btn" title="Φόρτωση PDF (μόνο καθηγητής)">
+                        <span class="btn-icon">📂</span>
+                        <span class="btn-text">Άνοιγμα PDF</span>
+                        <input type="file" id="pdf-file-input" accept=".pdf" style="display: none;">
+                    </label>
+                    <div class="pdf-nav-controls">
+                        <button id="pdf-prev" class="btn btn-tool" title="Προηγούμενη σελίδα">
+                            <span class="btn-icon">◀</span>
+                        </button>
+                        <span id="pdf-page-display" class="pdf-page-display">-/-</span>
+                        <button id="pdf-next" class="btn btn-tool" title="Επόμενη σελίδα">
+                            <span class="btn-icon">▶</span>
+                        </button>
+                    </div>
+                    <div class="pdf-zoom-controls">
+                        <button id="pdf-zoom-out" class="btn btn-tool" title="Σμίκρυνση">
+                            <span class="btn-icon">➖</span>
+                        </button>
+                        <span id="pdf-zoom-display" class="pdf-zoom-display">150%</span>
+                        <button id="pdf-zoom-in" class="btn btn-tool" title="Μεγέθυνση">
+                            <span class="btn-icon">➕</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Code Controls (shown by default) -->
+                <div class="code-controls" id="code-controls">
+                    <!-- Focus Mode Toggle (Teacher only) -->
+                    <button id="focus-mode-btn" class="btn btn-tool teacher-only" title="Λειτουργία Προσοχής - Κλείδωμα μαθητών">
+                        <span class="btn-icon">👁️</span>
+                    </button>
+                </div>
+            </div>
+            <div class="toolbar-right">
+                <!-- Theme Toggle -->
+                <button id="theme-toggle-btn" class="btn btn-icon-only" title="Αλλαγή θέματος (Ctrl+Shift+T)">
+                    <span class="btn-icon theme-icon">🌙</span>
+                </button>
+                
+                <!-- Keyboard Shortcuts Help -->
+                <button id="shortcuts-help-btn" class="btn btn-icon-only" title="Πλήκτρα συντομεύσεις (F1)">
+                    <span class="btn-icon">❓</span>
+                </button>
+                
+                <!-- Code Management -->
+                <button id="copy-btn" class="btn btn-action" title="Αντιγραφή κώδικα (Ctrl+Shift+C)">
+                    <span class="btn-icon">📋</span>
+                    <span class="btn-text">Αντιγραφή</span>
+                </button>
+                <button id="clear-btn" class="btn btn-danger" title="Καθαρισμός πίνακα">
+                    <span class="btn-icon">🗑️</span>
+                    <span class="btn-text">Καθαρισμός</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Editor Area -->
+        <main class="editor-container">
+            <div class="editor-wrapper">
+                <!-- Line Numbers (Code mode) -->
+                <div id="line-numbers" class="line-numbers">
+                    <div class="line-number">1</div>
+                </div>
+                
+                <!-- Grid-Based Code Editor -->
+                <div id="grid-editor-container" class="code-area">
+                    <!-- GridEditor will be initialized here -->
+                </div>
+                
+                <!-- PDF Viewer Container -->
+                <div id="pdf-viewer-container" class="pdf-viewer-container" style="display: none;">
+                    <!-- PDF will be rendered here by pdf-viewer.js -->
+                </div>
+                
+                <!-- Hidden textarea for backwards compatibility (fallback) -->
+                <textarea 
+                    id="code-editor" 
+                    class="code-editor hidden-legacy-editor" 
+                    spellcheck="false"
+                    style="display: none;"
+                ></textarea>
+            </div>
+            
+            <!-- Sidebar Resize Handle -->
+            <div class="sidebar-resize-handle" id="sidebar-resize-handle"></div>
+            
+            <!-- Right Sidebar - Keyword Menu / File Browser -->
+            <aside class="keyword-sidebar" id="keyword-sidebar">
+                <!-- Sidebar Tabs -->
+                <div class="sidebar-tabs">
+                    <button class="sidebar-tab active" data-tab="keywords">
+                        <span>⌨️ Λέξεις-Κλειδιά</span>
+                    </button>
+                    <button class="sidebar-tab teacher-only" data-tab="files" id="files-tab">
+                        <span>📁 Αρχεία</span>
+                    </button>
+                </div>
+                
+                <!-- Keywords Panel -->
+                <div class="sidebar-panel active" id="keywords-panel">
+                    <div class="sidebar-content" id="keywords-content">
+                        <!-- Keywords will be generated dynamically from glossa_keywords.js -->
+                    </div>
+                </div>
+                
+                <!-- Files Panel -->
+                <div class="sidebar-panel" id="files-panel">
+                    <div class="file-browser">
+                        <!-- Breadcrumb Navigation -->
+                        <div class="file-breadcrumb" id="file-breadcrumb">
+                            <span class="breadcrumb-item breadcrumb-root" data-path="">📂 Loading...</span>
+                        </div>
+                        <!-- File List -->
+                        <div class="file-list" id="file-list">
+                            <!-- Files will be loaded here dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </main>
+
+        <!-- Footer / Status Bar -->
+        <footer class="status-bar">
+            <div class="status-left">
+                <span id="line-count">Γραμμές: 1</span>
+                <span class="separator">|</span>
+                <span id="char-count">Χαρακτήρες: 0</span>
+                <span class="separator">|</span>
+                <span id="network-upload" class="network-traffic low" title="Upload ανά δευτερόλεπτο">↑ 0 B/s</span>
+                <span id="network-download" class="network-traffic low" title="Download ανά δευτερόλεπτο">↓ 0 B/s</span>
+                <!-- Student Hand Raise Button -->
+                <button id="hand-raise-btn" class="hand-raise-btn student-only" title="Σήκωσε το χέρι σου">✋</button>
+                <!-- Teacher: Raised Hands Indicator -->
+                <span id="raised-hands" class="raised-hands teacher-only" style="display: none;" title="Μαθητές με σηκωμένο χέρι">✋ <span id="raised-hands-count">0</span></span>
+            </div>
+            <div class="status-center">
+                <!-- Session Timer -->
+                <span id="session-timer" class="session-timer" title="Διάρκεια μαθήματος">⏱️ 00:00</span>
+                <span class="separator">|</span>
+                <!-- Student List (Teacher only) -->
+                <div id="student-list-toggle" class="student-list-toggle teacher-only" title="Συνδεδεμένοι μαθητές">
+                    <span class="student-icon">👥</span>
+                    <span id="student-count" class="student-count">0</span>
+                </div>
+                <span class="separator teacher-only">|</span>
+                <!-- Ngrok Stats (Teacher only) -->
+                <div id="ngrok-stats" class="ngrok-stats" style="display: none;">
+                    <span class="ngrok-icon">🌐</span>
+                    <span id="ngrok-latency" class="ngrok-latency" title="Καθυστέρηση σύνδεσης">--ms</span>
+                    <span class="separator">|</span>
+                    <span id="ngrok-connections" class="ngrok-connections" title="Ενεργές συνδέσεις">0 👥</span>
+                </div>
+            </div>
+            <div class="status-right">
+                <!-- Emoji Reactions (Student only) -->
+                <div id="emoji-reactions" class="emoji-reactions student-only">
+                    <button class="reaction-btn" data-reaction="understood" title="Κατάλαβα">✅</button>
+                    <button class="reaction-btn" data-reaction="confused" title="Δεν κατάλαβα">❓</button>
+                    <button class="reaction-btn" data-reaction="repeat" title="Επανάληψη">🔄</button>
+                </div>
+                <!-- Teacher: Reaction Counts -->
+                <div id="reaction-counts" class="reaction-counts teacher-only" style="display: none;">
+                    <span class="reaction-count" data-reaction="understood">✅ <span>0</span></span>
+                    <span class="reaction-count" data-reaction="confused">❓ <span>0</span></span>
+                    <span class="reaction-count" data-reaction="repeat">🔄 <span>0</span></span>
+                </div>
+                <span class="separator">|</span>
+                <span class="lang-badge">ΓΛΩΣΣΑ</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast hidden">
+        <span id="toast-message"></span>
+    </div>
+    
+    <!-- Keyboard Shortcuts Modal -->
+    <div id="shortcuts-modal" class="modal hidden">
+        <div class="modal-overlay"></div>
+        <div class="modal-content shortcuts-modal-content">
+            <div class="modal-header">
+                <h3>⌨️ Πλήκτρα Συντομεύσεις</h3>
+                <button class="modal-close" id="shortcuts-modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="shortcuts-section">
+                    <h4>📝 Επεξεργασία</h4>
+                    <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Z</kbd> <span>Αναίρεση</span></div>
+                    <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> <span>Επαναφορά</span></div>
+                    <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>C</kbd> <span>Αντιγραφή επιλογής</span></div>
+                    <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>X</kbd> <span>Αποκοπή επιλογής</span></div>
+                    <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>V</kbd> <span>Επικόλληση</span></div>
+                    <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>A</kbd> <span>Επιλογή όλων</span></div>
+                    <div class="shortcut-row"><kbd>Tab</kbd> <span>Εισαγωγή στηλοθέτη</span></div>
+                </div>
+                <div class="shortcuts-section">
+                    <h4>🔎 Εμφάνιση</h4>
+                    <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd> <span>Αλλαγή θέματος</span></div>
+                </div>
+                <div class="shortcuts-section">
+                    <h4>📋 Λειτουργίες</h4>
+                    <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd> <span>Αντιγραφή κώδικα</span></div>
+                    <div class="shortcut-row"><kbd>F1</kbd> <span>Εμφάνιση βοήθειας</span></div>
+                    <div class="shortcut-row"><kbd>Esc</kbd> <span>Κλείσιμο παραθύρου</span></div>
+                </div>
+                <div class="shortcuts-section teacher-only">
+                    <h4>👨‍🏫 Καθηγητής</h4>
+                    <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Hover</kbd> <span>Laser pointer</span></div>
+                    <div class="shortcut-row"><kbd>Click</kbd> αριθμό γραμμής <span>Breakpoint</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Student List Popup (Teacher only) -->
+    <div id="student-list-popup" class="student-list-popup hidden">
+        <div class="popup-header">
+            <span>👥 Συνδεδεμένοι Μαθητές</span>
+        </div>
+        <div id="student-list-content" class="student-list-content">
+            <div class="no-students">Κανένας μαθητής συνδεδεμένος</div>
+        </div>
+    </div>
+
+    <!-- Core Engine -->
+    <script src="src/core/LanguageManager.js?v=3"></script>
+    <script src="src/core/SmartInserter.js?v=2"></script>
+    
+    <!-- UI Components -->
+    <script src="src/components/UIManager.js?v=2"></script>
+    <script src="src/components/GridEditor.js?v=26"></script>
+    <script src="src/components/PdfViewer.js?v=3"></script>
+    <script src="src/components/FileBrowser.js?v=2"></script>
+    
+    <!-- UI Managers -->
+    <script src="src/ui/Toolbar.js?v=1"></script>
+    <script src="src/ui/StatusBar.js?v=1"></script>
+    <script src="src/ui/LayoutManager.js?v=1"></script>
+    
+    <!-- Modules -->
+    <script src="src/modules/Collaboration.js?v=51"></script>
+    
+    <!-- Main Application Bootstrap -->
+    <script src="src/main.js?v=1"></script>
+</body>
+</html>

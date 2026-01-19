@@ -1,0 +1,46 @@
+ΠΡΟΓΡΑΜΜΑ Συνδυασμοι
+! Υπολογίζει τους συνδυασμούς n ανά k: C(n,k) = n! / (k! * (n-k)!)
+
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: n, k, apotelesma
+
+ΑΡΧΗ
+ΓΡΑΨΕ 'Δώσε το n (σύνολο στοιχείων):'
+ΔΙΑΒΑΣΕ n
+ΓΡΑΨΕ 'Δώσε το k (επιλογή στοιχείων):'
+ΔΙΑΒΑΣΕ k
+
+! Κάλεσε τη συνάρτηση Combination
+apotelesma <- Combination(n, k)
+
+ΓΡΑΨΕ 'C(', n, ',', k, ') = ', apotelesma
+ΤΕΛΟΣ_ΠΡΟΓΡΑΜΜΑΤΟΣ
+
+! Βοηθητική συνάρτηση Factorial
+ΣΥΝΑΡΤΗΣΗ Factorial(num): ΑΚΕΡΑΙΑ
+
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: result, i
+
+result <- 1
+ΓΙΑ i ΑΠΟ 1 ΜΕΧΡΙ num
+    result <- result * i
+ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+
+Factorial <- result
+
+ΤΕΛΟΣ_ΣΥΝΑΡΤΗΣΗΣ
+
+! Συνάρτηση Combination που χρησιμοποιεί τη Factorial
+! C(n,k) = n! / (k! * (n-k)!)
+ΣΥΝΑΡΤΗΣΗ Combination(total, choice): ΑΚΕΡΑΙΑ
+
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: numerator, denominator
+
+numerator <- Factorial(total)
+denominator <- Factorial(choice) * Factorial(total - choice)
+
+Combination <- numerator DIV denominator
+
+ΤΕΛΟΣ_ΣΥΝΑΡΤΗΣΗΣ

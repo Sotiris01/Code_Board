@@ -1,0 +1,279 @@
+ΠΡΟΓΡΑΜΜΑ ΣύστημαΒαθμολόγησης
+! Ολοκληρωμένο σύστημα βαθμολόγησης σχολείου
+! Διαχείριση μαθητών, μαθημάτων και βαθμών
+
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: numStudents, numSubjects, i, j, choice
+    ΑΚΕΡΑΙΕΣ: passCount, failCount
+    ΠΡΑΓΜΑΤΙΚΕΣ: grades[30, 10], studentAvg[30], subjectAvg[10]
+    ΠΡΑΓΜΑΤΙΚΕΣ: classAvg, highestAvg, lowestAvg
+    ΧΑΡΑΚΤΗΡΕΣ: studentNames[30], subjectNames[10], bestStudent, worstStudent
+
+ΑΡΧΗ
+    ΓΡΑΨΕ 'ΣΥΣΤΗΜΑ ΒΑΘΜΟΛΟΓΗΣΗΣ ΣΧΟΛΕΙΟΥ'
+    ΓΡΑΨΕ '=============================='
+    
+    ! Εισαγωγή δεδομένων
+    ΓΡΑΨΕ 'Πόσοι μαθητές; (max 30)'
+    ΔΙΑΒΑΣΕ numStudents
+    ΓΡΑΨΕ 'Πόσα μαθήματα; (max 10)'
+    ΔΙΑΒΑΣΕ numSubjects
+
+    ! Εισαγωγή ονομάτων μαθημάτων
+    ΓΡΑΨΕ '--- ΟΝΟΜΑΤΑ ΜΑΘΗΜΑΤΩΝ ---'
+    ΓΙΑ j ΑΠΟ 1 ΜΕΧΡΙ numSubjects
+        ΓΡΑΨΕ 'Μάθημα ', j, ':'
+        ΔΙΑΒΑΣΕ subjectNames[j]
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+
+    ! Εισαγωγή μαθητών και βαθμών
+    ΓΙΑ i ΑΠΟ 1 ΜΕΧΡΙ numStudents
+        ΓΡΑΨΕ '--- ΜΑΘΗΤΗΣ ', i, ' ---'
+        ΓΡΑΨΕ 'Ονοματεπώνυμο:'
+        ΔΙΑΒΑΣΕ studentNames[i]
+        ΓΙΑ j ΑΠΟ 1 ΜΕΧΡΙ numSubjects
+            ΓΡΑΨΕ 'Βαθμός στο ', subjectNames[j], ':'
+            ΔΙΑΒΑΣΕ grades[i, j]
+        ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+
+    ! Υπολογισμός Μ.Ο. μαθητών (για χρήση στο μενού)
+    ΚΑΛΕΣΕ YpologismosMOmathiton(grades, studentAvg, numStudents, numSubjects)
+
+    ! Μενού
+    ΑΡΧΗ_ΕΠΑΝΑΛΗΨΗΣ
+        ΓΡΑΨΕ ''
+        ΓΡΑΨΕ '=== ΜΕΝΟΥ ==='
+        ΓΡΑΨΕ '1. Πίνακας βαθμολογιών'
+        ΓΡΑΨΕ '2. Μέσοι όροι μαθητών'
+        ΓΡΑΨΕ '3. Μέσοι όροι μαθημάτων'
+        ΓΡΑΨΕ '4. Αναλυτικά στατιστικά'
+        ΓΡΑΨΕ '5. Επιτυχόντες/Αποτυχόντες'
+        ΓΡΑΨΕ '6. Ταξινόμηση κατά βαθμολογία'
+        ΓΡΑΨΕ '0. Έξοδος'
+        ΔΙΑΒΑΣΕ choice
+
+        ΕΠΙΛΕΞΕ choice
+            ΠΕΡΙΠΤΩΣΗ 1
+                ΚΑΛΕΣΕ EmfanisiPinaka(studentNames, subjectNames, grades, numStudents, numSubjects)
+            ΠΕΡΙΠΤΩΣΗ 2
+                ΚΑΛΕΣΕ EmfanisiMOmathiton(studentNames, studentAvg, numStudents)
+            ΠΕΡΙΠΤΩΣΗ 3
+                ΚΑΛΕΣΕ YpologismosMOmathimaton(grades, subjectAvg, numStudents, numSubjects)
+                ΚΑΛΕΣΕ EmfanisiMOmathimaton(subjectNames, subjectAvg, numSubjects)
+            ΠΕΡΙΠΤΩΣΗ 4
+                classAvg <- MOtaxis(studentAvg, numStudents)
+                highestAvg <- MegistosMO(studentAvg, numStudents)
+                lowestAvg <- ElaxistosMO(studentAvg, numStudents)
+                bestStudent <- KalyterosMathitis(studentNames, studentAvg, numStudents)
+                worstStudent <- XeiroterosMathitis(studentNames, studentAvg, numStudents)
+                
+                ΓΡΑΨΕ '=== ΣΤΑΤΙΣΤΙΚΑ ΤΑΞΗΣ ==='
+                ΓΡΑΨΕ 'Μέσος όρος τάξης: ', classAvg
+                ΓΡΑΨΕ 'Υψηλότερος Μ.Ο.: ', highestAvg, ' (', bestStudent, ')'
+                ΓΡΑΨΕ 'Χαμηλότερος Μ.Ο.: ', lowestAvg, ' (', worstStudent, ')'
+            ΠΕΡΙΠΤΩΣΗ 5
+                passCount <- MetrisiEpitixonton(studentAvg, numStudents)
+                failCount <- numStudents - passCount
+                ΓΡΑΨΕ '=== ΑΠΟΤΕΛΕΣΜΑΤΑ ==='
+                ΓΡΑΨΕ 'Επιτυχόντες (Μ.Ο. >= 10): ', passCount
+                ΓΡΑΨΕ 'Αποτυχόντες (Μ.Ο. < 10): ', failCount
+            ΠΕΡΙΠΤΩΣΗ 6
+                ΚΑΛΕΣΕ TaksinomimeniEmfanisi(studentNames, studentAvg, numStudents)
+        ΤΕΛΟΣ_ΕΠΙΛΟΓΩΝ
+    ΜΕΧΡΙΣ_ΟΤΟΥ choice = 0
+ΤΕΛΟΣ_ΠΡΟΓΡΑΜΜΑΤΟΣ
+
+ΔΙΑΔΙΚΑΣΙΑ EmfanisiPinaka(nm[30], sub[10], gr[30, 10], nSt, nSub)
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: i, j
+ΑΡΧΗ
+    ΓΡΑΨΕ '=== ΠΙΝΑΚΑΣ ΒΑΘΜΟΛΟΓΙΩΝ ==='
+    ! Επικεφαλίδα μαθημάτων
+    ΓΡΑΨΕ 'Μαθητής'
+    ΓΙΑ j ΑΠΟ 1 ΜΕΧΡΙ nSub
+        ΓΡΑΨΕ ' | ', sub[j]
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+    ΓΡΑΨΕ ''
+    
+    ! Βαθμοί ανά μαθητή
+    ΓΙΑ i ΑΠΟ 1 ΜΕΧΡΙ nSt
+        ΓΡΑΨΕ nm[i]
+        ΓΙΑ j ΑΠΟ 1 ΜΕΧΡΙ nSub
+            ΓΡΑΨΕ ' | ', gr[i, j]
+        ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+        ΓΡΑΨΕ ''
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+ΤΕΛΟΣ_ΔΙΑΔΙΚΑΣΙΑΣ
+
+ΔΙΑΔΙΚΑΣΙΑ YpologismosMOmathiton(gr[30, 10], avg[30], nSt, nSub)
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: i, j
+    ΠΡΑΓΜΑΤΙΚΕΣ: sum
+ΑΡΧΗ
+    ΓΙΑ i ΑΠΟ 1 ΜΕΧΡΙ nSt
+        sum <- 0
+        ΓΙΑ j ΑΠΟ 1 ΜΕΧΡΙ nSub
+            sum <- sum + gr[i, j]
+        ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+        avg[i] <- sum / nSub
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+ΤΕΛΟΣ_ΔΙΑΔΙΚΑΣΙΑΣ
+
+ΔΙΑΔΙΚΑΣΙΑ EmfanisiMOmathiton(nm[30], avg[30], nSt)
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: i
+    ΧΑΡΑΚΤΗΡΕΣ: status
+ΑΡΧΗ
+    ΓΡΑΨΕ '=== ΜΕΣΟΙ ΟΡΟΙ ΜΑΘΗΤΩΝ ==='
+    ΓΙΑ i ΑΠΟ 1 ΜΕΧΡΙ nSt
+        ΑΝ avg[i] >= 10 ΤΟΤΕ
+            status <- 'ΕΠΙΤΥΧΙΑ'
+        ΑΛΛΙΩΣ
+            status <- 'ΑΠΟΤΥΧΙΑ'
+        ΤΕΛΟΣ_ΑΝ
+        ΓΡΑΨΕ nm[i], ': ', avg[i], ' [', status, ']'
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+ΤΕΛΟΣ_ΔΙΑΔΙΚΑΣΙΑΣ
+
+ΔΙΑΔΙΚΑΣΙΑ YpologismosMOmathimaton(gr[30, 10], avg[10], nSt, nSub)
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: i, j
+    ΠΡΑΓΜΑΤΙΚΕΣ: sum
+ΑΡΧΗ
+    ΓΙΑ j ΑΠΟ 1 ΜΕΧΡΙ nSub
+        sum <- 0
+        ΓΙΑ i ΑΠΟ 1 ΜΕΧΡΙ nSt
+            sum <- sum + gr[i, j]
+        ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+        avg[j] <- sum / nSt
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+ΤΕΛΟΣ_ΔΙΑΔΙΚΑΣΙΑΣ
+
+ΔΙΑΔΙΚΑΣΙΑ EmfanisiMOmathimaton(sub[10], avg[10], nSub)
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: j
+ΑΡΧΗ
+    ΓΡΑΨΕ '=== ΜΕΣΟΙ ΟΡΟΙ ΜΑΘΗΜΑΤΩΝ ==='
+    ΓΙΑ j ΑΠΟ 1 ΜΕΧΡΙ nSub
+        ΓΡΑΨΕ sub[j], ': ', avg[j]
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+ΤΕΛΟΣ_ΔΙΑΔΙΚΑΣΙΑΣ
+
+ΣΥΝΑΡΤΗΣΗ MOtaxis(avg[30], nSt): ΠΡΑΓΜΑΤΙΚΗ
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: i
+    ΠΡΑΓΜΑΤΙΚΕΣ: sum
+ΑΡΧΗ
+    sum <- 0
+    ΓΙΑ i ΑΠΟ 1 ΜΕΧΡΙ nSt
+        sum <- sum + avg[i]
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+    MOtaxis <- sum / nSt
+ΤΕΛΟΣ_ΣΥΝΑΡΤΗΣΗΣ
+
+ΣΥΝΑΡΤΗΣΗ MegistosMO(avg[30], nSt): ΠΡΑΓΜΑΤΙΚΗ
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: i
+    ΠΡΑΓΜΑΤΙΚΕΣ: maxVal
+ΑΡΧΗ
+    maxVal <- avg[1]
+    ΓΙΑ i ΑΠΟ 2 ΜΕΧΡΙ nSt
+        ΑΝ avg[i] > maxVal ΤΟΤΕ
+            maxVal <- avg[i]
+        ΤΕΛΟΣ_ΑΝ
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+    MegistosMO <- maxVal
+ΤΕΛΟΣ_ΣΥΝΑΡΤΗΣΗΣ
+
+ΣΥΝΑΡΤΗΣΗ ElaxistosMO(avg[30], nSt): ΠΡΑΓΜΑΤΙΚΗ
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: i
+    ΠΡΑΓΜΑΤΙΚΕΣ: minVal
+ΑΡΧΗ
+    minVal <- avg[1]
+    ΓΙΑ i ΑΠΟ 2 ΜΕΧΡΙ nSt
+        ΑΝ avg[i] < minVal ΤΟΤΕ
+            minVal <- avg[i]
+        ΤΕΛΟΣ_ΑΝ
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+    ElaxistosMO <- minVal
+ΤΕΛΟΣ_ΣΥΝΑΡΤΗΣΗΣ
+
+ΣΥΝΑΡΤΗΣΗ KalyterosMathitis(nm[30], avg[30], nSt): ΧΑΡΑΚΤΗΡΑΣ
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: i, bestPos
+    ΠΡΑΓΜΑΤΙΚΕΣ: maxVal
+ΑΡΧΗ
+    maxVal <- avg[1]
+    bestPos <- 1
+    ΓΙΑ i ΑΠΟ 2 ΜΕΧΡΙ nSt
+        ΑΝ avg[i] > maxVal ΤΟΤΕ
+            maxVal <- avg[i]
+            bestPos <- i
+        ΤΕΛΟΣ_ΑΝ
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+    KalyterosMathitis <- nm[bestPos]
+ΤΕΛΟΣ_ΣΥΝΑΡΤΗΣΗΣ
+
+ΣΥΝΑΡΤΗΣΗ XeiroterosMathitis(nm[30], avg[30], nSt): ΧΑΡΑΚΤΗΡΑΣ
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: i, worstPos
+    ΠΡΑΓΜΑΤΙΚΕΣ: minVal
+ΑΡΧΗ
+    minVal <- avg[1]
+    worstPos <- 1
+    ΓΙΑ i ΑΠΟ 2 ΜΕΧΡΙ nSt
+        ΑΝ avg[i] < minVal ΤΟΤΕ
+            minVal <- avg[i]
+            worstPos <- i
+        ΤΕΛΟΣ_ΑΝ
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+    XeiroterosMathitis <- nm[worstPos]
+ΤΕΛΟΣ_ΣΥΝΑΡΤΗΣΗΣ
+
+ΣΥΝΑΡΤΗΣΗ MetrisiEpitixonton(avg[30], nSt): ΑΚΕΡΑΙΑ
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: i, count
+ΑΡΧΗ
+    count <- 0
+    ΓΙΑ i ΑΠΟ 1 ΜΕΧΡΙ nSt
+        ΑΝ avg[i] >= 10 ΤΟΤΕ
+            count <- count + 1
+        ΤΕΛΟΣ_ΑΝ
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+    MetrisiEpitixonton <- count
+ΤΕΛΟΣ_ΣΥΝΑΡΤΗΣΗΣ
+
+ΔΙΑΔΙΚΑΣΙΑ TaksinomimeniEmfanisi(nm[30], avg[30], nSt)
+ΜΕΤΑΒΛΗΤΕΣ
+    ΑΚΕΡΑΙΕΣ: i, j
+    ΠΡΑΓΜΑΤΙΚΕΣ: tempAvg, sortedAvg[30]
+    ΧΑΡΑΚΤΗΡΕΣ: tempNm, sortedNm[30]
+ΑΡΧΗ
+    ! Αντιγραφή σε προσωρινούς πίνακες
+    ΓΙΑ i ΑΠΟ 1 ΜΕΧΡΙ nSt
+        sortedAvg[i] <- avg[i]
+        sortedNm[i] <- nm[i]
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+    
+    ! Bubble Sort φθίνουσα
+    ΓΙΑ i ΑΠΟ 1 ΜΕΧΡΙ nSt - 1
+        ΓΙΑ j ΑΠΟ 1 ΜΕΧΡΙ nSt - i
+            ΑΝ sortedAvg[j] < sortedAvg[j + 1] ΤΟΤΕ
+                tempAvg <- sortedAvg[j]
+                sortedAvg[j] <- sortedAvg[j + 1]
+                sortedAvg[j + 1] <- tempAvg
+                
+                tempNm <- sortedNm[j]
+                sortedNm[j] <- sortedNm[j + 1]
+                sortedNm[j + 1] <- tempNm
+            ΤΕΛΟΣ_ΑΝ
+        ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+    
+    ΓΡΑΨΕ '=== ΚΑΤΑΤΑΞΗ ΜΑΘΗΤΩΝ ==='
+    ΓΙΑ i ΑΠΟ 1 ΜΕΧΡΙ nSt
+        ΓΡΑΨΕ i, '. ', sortedNm[i], ' - Μ.Ο.: ', sortedAvg[i]
+    ΤΕΛΟΣ_ΕΠΑΝΑΛΗΨΗΣ
+ΤΕΛΟΣ_ΔΙΑΔΙΚΑΣΙΑΣ

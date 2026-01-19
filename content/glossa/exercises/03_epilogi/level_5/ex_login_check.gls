@@ -1,0 +1,29 @@
+ΠΡΟΓΡΑΜΜΑ ΈλεγχοςΣύνδεσης
+! Ελέγχει σύνδεση χρήστη με username και password
+! Επιτυχία: σωστό username ΚΑΙ σωστό password
+! Μήνυμα σφάλματος ανάλογα με το τι είναι λάθος
+
+ΜΕΤΑΒΛΗΤΕΣ
+    ΧΑΡΑΚΤΗΡΕΣ: username, password, correct_user, correct_pass
+
+ΑΡΧΗ
+    correct_user <- 'admin'
+    correct_pass <- '1234'
+
+    ΓΡΑΨΕ 'Δώσε το username:'
+    ΔΙΑΒΑΣΕ username
+    ΓΡΑΨΕ 'Δώσε το password:'
+    ΔΙΑΒΑΣΕ password
+
+    ! TODO: Συμπλήρωσε τις σύνθετες συνθήκες
+    ΑΝ username = correct_user ΚΑΙ password = correct_pass ΤΟΤΕ
+        ΓΡΑΨΕ 'Επιτυχής σύνδεση! Καλωσήρθες!'
+    ΑΛΛΙΩΣ
+        ΑΝ username <> __________ ΤΟΤΕ
+            ΓΡΑΨΕ 'Λάθος username'
+        ΤΕΛΟΣ_ΑΝ
+        ΑΝ password <> __________ ΤΟΤΕ
+            ΓΡΑΨΕ 'Λάθος password'
+        ΤΕΛΟΣ_ΑΝ
+    ΤΕΛΟΣ_ΑΝ
+ΤΕΛΟΣ_ΠΡΟΓΡΑΜΜΑΤΟΣ
