@@ -33,3 +33,7 @@ temp/
 # Build outputs (if any)
 dist/
 build/
+
+# Explicitly Track
+!GEMINI.md
+!*.tex
