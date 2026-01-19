@@ -34,6 +34,6 @@ temp/
 dist/
 build/
 
-# Explicitly Track
+# Project Documentation & Sources to Ignore
 GEMINI.md
 *.tex
