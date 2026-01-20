@@ -1,47 +1,29 @@
-# Phase 3: Adding Python Support
+# Objective: Add Java Content, Server Support & UI Icons (Phase 5.7 - 5.9)
 
-We are expanding the platform to support Python. This involves creating the Python language module and registering it in the system.
+We are adding the necessary content and backend support for Java.
 
-## 1. Create Directory Structure
-Create directory: `src/languages/python/`
+## Tasks:
 
-## 2. Implement Language Modules
-Create the following files in `src/languages/python/`:
+1.  **Create Directory:** `content/java/templates/`
 
-### A. `keywords.js`
-- Define basic Python keywords (if, else, elif, for, while, def, return, print, input, import, class, True, False, None, and, or, not).
-- Define `SIDEBAR_CONFIG` for Python with categories (Control, Loops, I/O, Operators).
-- Register to `window.Languages.Python.keywords`.
+2.  **Create Java Templates** in `content/java/templates/`:
+    -   `program.java`: Basic Hello World.
+    -   `class.java`: Basic class structure.
+    -   `main.java`: Main class with main method.
+    -   `if-else.java`: Control flow example.
+    -   `for-loop.java`: Loop example.
 
-### B. `syntax.js`
-- Implement `highlightSyntax(code)` for Python.
-- Rules:
-  - Comments: `# ...`
-  - Strings: Single `'` and Double `"` quotes.
-  - Numbers.
-  - Keywords (from `keywords.js`).
-- Register to `window.Languages.Python.syntax`.
+3.  **Update `server.js`:**
+    -   Update `/api/files` endpoint filter to include `.java` files.
+    -   Update `/api/files/content` endpoint `allowedExtensions` to include `.java`.
 
-### C. `snippets.js`
-- Define `SMART_INSERTION` rules for Python.
-- Focus on Pythonic style (colons and indentation).
-- Examples:
-  - `if`: `if {{CURSOR}}:\n    pass`
-  - `for`: `for i in range({{CURSOR}}):\n    pass`
-  - `def`: `def {{NAME}}():\n    {{CURSOR}}`
-- Register to `window.Languages.Python.snippets`.
+4.  **Update `src/components/FileBrowser.js`:**
+    -   Update `getFileIcon` method to map `java` extension to '☕' (coffee cup).
+    -   Update `renderFileList` to handle `.java` extension stripping in the display name (if applicable/desired, or just keep it).
 
-### D. `content.js`
-- Define `initialCode`: `print("Hello World")`.
-- Define empty placeholders for `exercises` and `algorithms` (so the UI doesn't crash).
-- Register to `window.Languages.Python.content`.
+## Constraints:
+-   Ensure Java templates are syntactically correct.
+-   `server.js` changes should be minimal and safe.
+-   `FileBrowser.js` icon should be visible.
 
-## 3. Register Language
-- **File:** `src/core/LanguageManager.js`
-- **Action:** Update the language registry/loader to include `'python'` and map it to the `src/languages/python/` path.
-
-## 4. UI Update
-- **File:** `index.html`
-- **Action:** Add `<option value="python">Python</option>` to the `#language-selector`.
-
-First create 'Todos', do not attempt to do all at once. Finally, update the file structure in `GEMINI.md`, explicitly marking **new** files as `(new)` and **modified** files as `(modified)`. 
+First create 'Todos', do not attempt to do all at once. Finally, update the file structure in `GEMINI.md`, explicitly marking **new** files as `(new)` and **modified** files as `(modified)`.

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code Board - Πίνακας Διδασκαλίας ΓΛΩΣΣΑΣ</title>
+    <title>Code Board - Code Teaching Board</title>
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="styles.css?v=39">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -20,15 +20,14 @@
         <header class="toolbar">
             <div class="toolbar-left">
                 <h1 class="app-title">📝 Code Board</h1>
-                <span class="subtitle">Πίνακας Διδασκαλίας ΓΛΩΣΣΑΣ</span>
                 
                 <!-- Mode Toggle Buttons -->
                 <div class="mode-toggle">
-                    <button id="mode-code" class="btn btn-mode active" title="Επεξεργαστής Κώδικα">
+                    <button id="mode-code" class="btn btn-mode active" title="Code Editor">
                         <span class="btn-icon">💻</span>
-                        <span class="btn-text">Κώδικας</span>
+                        <span class="btn-text">Code</span>
                     </button>
-                    <button id="mode-pdf" class="btn btn-mode" title="Προβολή PDF">
+                    <button id="mode-pdf" class="btn btn-mode" title="PDF Viewer">
                         <span class="btn-icon">📄</span>
                         <span class="btn-text">PDF</span>
                     </button>
@@ -36,36 +35,38 @@
                 
                 <!-- Language Selector -->
                 <div class="language-selector-container">
-                    <label for="language-selector" class="language-label">Γλώσσα:</label>
-                    <select id="language-selector" class="language-selector" title="Επιλογή γλώσσας προγραμματισμού">
+                    <label for="language-selector" class="language-label">Language:</label>
+                    <select id="language-selector" class="language-selector" title="Select programming language">
                         <option value="glossa" selected>ΓΛΩΣΣΑ</option>
-                        <!-- Future languages will be added dynamically -->
+                        <option value="python">Python</option>
+                        <option value="cpp">C++</option>
+                        <option value="java">Java</option>
                     </select>
                 </div>
             </div>
             <div class="toolbar-center">
                 <!-- PDF Controls (hidden by default) -->
                 <div class="pdf-controls" id="pdf-controls" style="display: none;">
-                    <label class="btn btn-tool pdf-load-btn" title="Φόρτωση PDF (μόνο καθηγητής)">
+                    <label class="btn btn-tool pdf-load-btn" title="Load PDF (Teacher only)">
                         <span class="btn-icon">📂</span>
-                        <span class="btn-text">Άνοιγμα PDF</span>
+                        <span class="btn-text">Open PDF</span>
                         <input type="file" id="pdf-file-input" accept=".pdf" style="display: none;">
                     </label>
                     <div class="pdf-nav-controls">
-                        <button id="pdf-prev" class="btn btn-tool" title="Προηγούμενη σελίδα">
+                        <button id="pdf-prev" class="btn btn-tool" title="Previous Page">
                             <span class="btn-icon">◀</span>
                         </button>
                         <span id="pdf-page-display" class="pdf-page-display">-/-</span>
-                        <button id="pdf-next" class="btn btn-tool" title="Επόμενη σελίδα">
+                        <button id="pdf-next" class="btn btn-tool" title="Next Page">
                             <span class="btn-icon">▶</span>
                         </button>
                     </div>
                     <div class="pdf-zoom-controls">
-                        <button id="pdf-zoom-out" class="btn btn-tool" title="Σμίκρυνση">
+                        <button id="pdf-zoom-out" class="btn btn-tool" title="Zoom Out">
                             <span class="btn-icon">➖</span>
                         </button>
                         <span id="pdf-zoom-display" class="pdf-zoom-display">150%</span>
-                        <button id="pdf-zoom-in" class="btn btn-tool" title="Μεγέθυνση">
+                        <button id="pdf-zoom-in" class="btn btn-tool" title="Zoom In">
                             <span class="btn-icon">➕</span>
                         </button>
                     </div>
@@ -74,30 +75,30 @@
                 <!-- Code Controls (shown by default) -->
                 <div class="code-controls" id="code-controls">
                     <!-- Focus Mode Toggle (Teacher only) -->
-                    <button id="focus-mode-btn" class="btn btn-tool teacher-only" title="Λειτουργία Προσοχής - Κλείδωμα μαθητών">
+                    <button id="focus-mode-btn" class="btn btn-tool teacher-only" title="Focus Mode - Lock Students">
                         <span class="btn-icon">👁️</span>
                     </button>
                 </div>
             </div>
             <div class="toolbar-right">
                 <!-- Theme Toggle -->
-                <button id="theme-toggle-btn" class="btn btn-icon-only" title="Αλλαγή θέματος (Ctrl+Shift+T)">
+                <button id="theme-toggle-btn" class="btn btn-icon-only" title="Change Theme (Ctrl+Shift+T)">
                     <span class="btn-icon theme-icon">🌙</span>
                 </button>
                 
                 <!-- Keyboard Shortcuts Help -->
-                <button id="shortcuts-help-btn" class="btn btn-icon-only" title="Πλήκτρα συντομεύσεις (F1)">
+                <button id="shortcuts-help-btn" class="btn btn-icon-only" title="Keyboard Shortcuts (F1)">
                     <span class="btn-icon">❓</span>
                 </button>
                 
                 <!-- Code Management -->
-                <button id="copy-btn" class="btn btn-action" title="Αντιγραφή κώδικα (Ctrl+Shift+C)">
+                <button id="copy-btn" class="btn btn-action" title="Copy Code (Ctrl+Shift+C)">
                     <span class="btn-icon">📋</span>
-                    <span class="btn-text">Αντιγραφή</span>
+                    <span class="btn-text">Copy</span>
                 </button>
-                <button id="clear-btn" class="btn btn-danger" title="Καθαρισμός πίνακα">
+                <button id="clear-btn" class="btn btn-danger" title="Clear Board">
                     <span class="btn-icon">🗑️</span>
-                    <span class="btn-text">Καθαρισμός</span>
+                    <span class="btn-text">Clear</span>
                 </button>
             </div>
         </header>
@@ -132,35 +133,48 @@
             <!-- Sidebar Resize Handle -->
             <div class="sidebar-resize-handle" id="sidebar-resize-handle"></div>
             
-            <!-- Right Sidebar - Keyword Menu / File Browser -->
-            <aside class="keyword-sidebar" id="keyword-sidebar">
-                <!-- Sidebar Tabs -->
-                <div class="sidebar-tabs">
-                    <button class="sidebar-tab active" data-tab="keywords">
-                        <span>⌨️ Λέξεις-Κλειδιά</span>
+            <!-- Right Sidebar Container (Activity Bar + Side Panel) -->
+            <aside class="sidebar-container" id="sidebar-container">
+                <!-- Activity Bar (Vertical Icon Strip) -->
+                <div class="activity-bar" id="activity-bar">
+                    <button class="activity-btn active" data-panel="keywords" title="Λέξεις-Κλειδιά (Ctrl+1)">
+                        <span class="activity-icon">⌨️</span>
                     </button>
-                    <button class="sidebar-tab teacher-only" data-tab="files" id="files-tab">
-                        <span>📁 Αρχεία</span>
+                    <button class="activity-btn teacher-only" data-panel="files" title="Αρχεία (Ctrl+2)">
+                        <span class="activity-icon">📁</span>
+                    </button>
+                    <div class="activity-spacer"></div>
+                    <button class="activity-btn" data-action="toggle-sidebar" title="Εμφάνιση/Απόκρυψη πλαϊνής μπάρας">
+                        <span class="activity-icon">◀</span>
                     </button>
                 </div>
                 
-                <!-- Keywords Panel -->
-                <div class="sidebar-panel active" id="keywords-panel">
-                    <div class="sidebar-content" id="keywords-content">
-                        <!-- Keywords will be generated dynamically from glossa_keywords.js -->
-                    </div>
-                </div>
-                
-                <!-- Files Panel -->
-                <div class="sidebar-panel" id="files-panel">
-                    <div class="file-browser">
-                        <!-- Breadcrumb Navigation -->
-                        <div class="file-breadcrumb" id="file-breadcrumb">
-                            <span class="breadcrumb-item breadcrumb-root" data-path="">📂 Loading...</span>
+                <!-- Side Panel Content -->
+                <div class="side-panel" id="side-panel">
+                    <!-- Keywords Panel -->
+                    <div class="sidebar-panel active" id="keywords-panel">
+                        <div class="panel-header">
+                            <span class="panel-title">KEYWORDS</span>
                         </div>
-                        <!-- File List -->
-                        <div class="file-list" id="file-list">
-                            <!-- Files will be loaded here dynamically -->
+                        <div class="sidebar-content" id="keywords-content">
+                            <!-- Keywords will be generated dynamically -->
+                        </div>
+                    </div>
+                    
+                    <!-- Files Panel -->
+                    <div class="sidebar-panel" id="files-panel">
+                        <div class="panel-header">
+                            <span class="panel-title">FILE EXPLORER</span>
+                        </div>
+                        <div class="file-browser">
+                            <!-- Breadcrumb Navigation -->
+                            <div class="file-breadcrumb" id="file-breadcrumb">
+                                <span class="breadcrumb-item breadcrumb-root" data-path="">📂 Loading...</span>
+                            </div>
+                            <!-- File List -->
+                            <div class="file-list" id="file-list">
+                                <!-- Files will be loaded here dynamically -->
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -170,23 +184,23 @@
         <!-- Footer / Status Bar -->
         <footer class="status-bar">
             <div class="status-left">
-                <span id="line-count">Γραμμές: 1</span>
+                <span id="line-count">Lines: 1</span>
                 <span class="separator">|</span>
-                <span id="char-count">Χαρακτήρες: 0</span>
+                <span id="char-count">Characters: 0</span>
                 <span class="separator">|</span>
-                <span id="network-upload" class="network-traffic low" title="Upload ανά δευτερόλεπτο">↑ 0 B/s</span>
-                <span id="network-download" class="network-traffic low" title="Download ανά δευτερόλεπτο">↓ 0 B/s</span>
+                <span id="network-upload" class="network-traffic low" title="Upload per second">↑ 0 B/s</span>
+                <span id="network-download" class="network-traffic low" title="Download per second">↓ 0 B/s</span>
                 <!-- Student Hand Raise Button -->
-                <button id="hand-raise-btn" class="hand-raise-btn student-only" title="Σήκωσε το χέρι σου">✋</button>
+                <button id="hand-raise-btn" class="hand-raise-btn student-only" title="Raise Your Hand">✋</button>
                 <!-- Teacher: Raised Hands Indicator -->
-                <span id="raised-hands" class="raised-hands teacher-only" style="display: none;" title="Μαθητές με σηκωμένο χέρι">✋ <span id="raised-hands-count">0</span></span>
+                <span id="raised-hands" class="raised-hands teacher-only" style="display: none;" title="Students with Raised Hands">✋ <span id="raised-hands-count">0</span></span>
             </div>
             <div class="status-center">
                 <!-- Session Timer -->
-                <span id="session-timer" class="session-timer" title="Διάρκεια μαθήματος">⏱️ 00:00</span>
+                <span id="session-timer" class="session-timer" title="Session Duration">⏱️ 00:00</span>
                 <span class="separator">|</span>
                 <!-- Student List (Teacher only) -->
-                <div id="student-list-toggle" class="student-list-toggle teacher-only" title="Συνδεδεμένοι μαθητές">
+                <div id="student-list-toggle" class="student-list-toggle teacher-only" title="Connected Students">
                     <span class="student-icon">👥</span>
                     <span id="student-count" class="student-count">0</span>
                 </div>
@@ -194,17 +208,17 @@
                 <!-- Ngrok Stats (Teacher only) -->
                 <div id="ngrok-stats" class="ngrok-stats" style="display: none;">
                     <span class="ngrok-icon">🌐</span>
-                    <span id="ngrok-latency" class="ngrok-latency" title="Καθυστέρηση σύνδεσης">--ms</span>
+                    <span id="ngrok-latency" class="ngrok-latency" title="Connection Latency">--ms</span>
                     <span class="separator">|</span>
-                    <span id="ngrok-connections" class="ngrok-connections" title="Ενεργές συνδέσεις">0 👥</span>
+                    <span id="ngrok-connections" class="ngrok-connections" title="Active Connections">0 👥</span>
                 </div>
             </div>
             <div class="status-right">
                 <!-- Emoji Reactions (Student only) -->
                 <div id="emoji-reactions" class="emoji-reactions student-only">
-                    <button class="reaction-btn" data-reaction="understood" title="Κατάλαβα">✅</button>
-                    <button class="reaction-btn" data-reaction="confused" title="Δεν κατάλαβα">❓</button>
-                    <button class="reaction-btn" data-reaction="repeat" title="Επανάληψη">🔄</button>
+                    <button class="reaction-btn" data-reaction="understood" title="Understood">✅</button>
+                    <button class="reaction-btn" data-reaction="confused" title="Confused">❓</button>
+                    <button class="reaction-btn" data-reaction="repeat" title="Repeat">🔄</button>
                 </div>
                 <!-- Teacher: Reaction Counts -->
                 <div id="reaction-counts" class="reaction-counts teacher-only" style="display: none;">
@@ -212,8 +226,6 @@
                     <span class="reaction-count" data-reaction="confused">❓ <span>0</span></span>
                     <span class="reaction-count" data-reaction="repeat">🔄 <span>0</span></span>
                 </div>
-                <span class="separator">|</span>
-                <span class="lang-badge">ΓΛΩΣΣΑ</span>
             </div>
         </footer>
     </div>
@@ -228,34 +240,34 @@
         <div class="modal-overlay"></div>
         <div class="modal-content shortcuts-modal-content">
             <div class="modal-header">
-                <h3>⌨️ Πλήκτρα Συντομεύσεις</h3>
+                <h3>⌨️ Keyboard Shortcuts</h3>
                 <button class="modal-close" id="shortcuts-modal-close">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="shortcuts-section">
-                    <h4>📝 Επεξεργασία</h4>
-                    <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Z</kbd> <span>Αναίρεση</span></div>
-                    <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> <span>Επαναφορά</span></div>
-                    <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>C</kbd> <span>Αντιγραφή επιλογής</span></div>
-                    <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>X</kbd> <span>Αποκοπή επιλογής</span></div>
-                    <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>V</kbd> <span>Επικόλληση</span></div>
-                    <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>A</kbd> <span>Επιλογή όλων</span></div>
-                    <div class="shortcut-row"><kbd>Tab</kbd> <span>Εισαγωγή στηλοθέτη</span></div>
+                    <h4>📝 Editing</h4>
+                    <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Z</kbd> <span>Undo</span></div>
+                    <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> <span>Redo</span></div>
+                    <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>C</kbd> <span>Copy Selection</span></div>
+                    <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>X</kbd> <span>Cut Selection</span></div>
+                    <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>V</kbd> <span>Paste</span></div>
+                    <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>A</kbd> <span>Select All</span></div>
+                    <div class="shortcut-row"><kbd>Tab</kbd> <span>Insert Tab</span></div>
                 </div>
                 <div class="shortcuts-section">
-                    <h4>🔎 Εμφάνιση</h4>
-                    <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd> <span>Αλλαγή θέματος</span></div>
+                    <h4>🔎 View</h4>
+                    <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd> <span>Toggle Theme</span></div>
                 </div>
                 <div class="shortcuts-section">
-                    <h4>📋 Λειτουργίες</h4>
-                    <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd> <span>Αντιγραφή κώδικα</span></div>
-                    <div class="shortcut-row"><kbd>F1</kbd> <span>Εμφάνιση βοήθειας</span></div>
-                    <div class="shortcut-row"><kbd>Esc</kbd> <span>Κλείσιμο παραθύρου</span></div>
+                    <h4>📋 Operations</h4>
+                    <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd> <span>Copy Code</span></div>
+                    <div class="shortcut-row"><kbd>F1</kbd> <span>Show Help</span></div>
+                    <div class="shortcut-row"><kbd>Esc</kbd> <span>Close Window</span></div>
                 </div>
                 <div class="shortcuts-section teacher-only">
-                    <h4>👨‍🏫 Καθηγητής</h4>
+                    <h4>👨‍🏫 Teacher</h4>
                     <div class="shortcut-row"><kbd>Ctrl</kbd>+<kbd>Hover</kbd> <span>Laser pointer</span></div>
-                    <div class="shortcut-row"><kbd>Click</kbd> αριθμό γραμμής <span>Breakpoint</span></div>
+                    <div class="shortcut-row"><kbd>Click</kbd> line number <span>Breakpoint</span></div>
                 </div>
             </div>
         </div>
@@ -264,10 +276,10 @@
     <!-- Student List Popup (Teacher only) -->
     <div id="student-list-popup" class="student-list-popup hidden">
         <div class="popup-header">
-            <span>👥 Συνδεδεμένοι Μαθητές</span>
+            <span>👥 Connected Students</span>
         </div>
         <div id="student-list-content" class="student-list-content">
-            <div class="no-students">Κανένας μαθητής συνδεδεμένος</div>
+            <div class="no-students">No students connected</div>
         </div>
     </div>
 
@@ -277,7 +289,8 @@
     
     <!-- UI Components -->
     <script src="src/components/UIManager.js?v=2"></script>
-    <script src="src/components/GridEditor.js?v=26"></script>
+    <script src="src/components/SyntaxHighlighter.js?v=1"></script>
+    <script src="src/components/GridEditor.js?v=27"></script>
     <script src="src/components/PdfViewer.js?v=3"></script>
     <script src="src/components/FileBrowser.js?v=2"></script>
     

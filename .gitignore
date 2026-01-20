@@ -37,3 +37,6 @@ build/
 # Project Documentation & Sources to Ignore
 GEMINI.md
 *.tex
+
+.gemini/
+gha-creds-*.json

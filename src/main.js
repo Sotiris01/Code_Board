@@ -99,20 +99,39 @@ function initKeywordButtons() {
 }
 
 /**
- * Generates the keyword sidebar from SIDEBAR_CONFIG
+ * Generates the keyword sidebar from the current language's SIDEBAR_CONFIG
  */
 function generateKeywordSidebar() {
     const container = document.getElementById('keywords-content');
     if (!container) return;
     
-    if (typeof SIDEBAR_CONFIG === 'undefined') {
-        console.error('SIDEBAR_CONFIG not loaded');
+    // Get SIDEBAR_CONFIG from the current language module
+    let sidebarConfig = null;
+    const currentLang = typeof LanguageManager !== 'undefined' ? LanguageManager.getCurrentLanguage() : 'unknown';
+    
+    if (typeof LanguageManager !== 'undefined') {
+        sidebarConfig = LanguageManager.getSidebarConfig();
+        console.log('📋 generateKeywordSidebar: Got config for', currentLang, ':', 
+            sidebarConfig ? `${sidebarConfig.length} groups` : 'null');
+    }
+    
+    // Fallback to global SIDEBAR_CONFIG for backward compatibility
+    if (!sidebarConfig && typeof SIDEBAR_CONFIG !== 'undefined') {
+        console.warn('📋 generateKeywordSidebar: Falling back to global SIDEBAR_CONFIG');
+        sidebarConfig = SIDEBAR_CONFIG;
+    }
+    
+    if (!sidebarConfig) {
+        console.error('SIDEBAR_CONFIG not available for current language');
         container.innerHTML = '<div class="error">Σφάλμα φόρτωσης λέξεων-κλειδιών</div>';
         return;
     }
     
+    // Log first group title to identify which config is being used
+    console.log('📋 First group title:', sidebarConfig[0]?.title);
+    
     let html = '';
-    SIDEBAR_CONFIG.forEach(group => {
+    sidebarConfig.forEach(group => {
         html += `<div class="keyword-group" data-group="${group.id}">`;
         html += `<div class="group-title">${group.title}</div>`;
         html += '<div class="keyword-buttons">';
@@ -127,7 +146,7 @@ function generateKeywordSidebar() {
     
     container.innerHTML = html;
     initKeywordButtons();
-    console.log('📋 Keyword sidebar generated');
+    console.log('📋 Keyword sidebar generated for:', currentLang);
 }
 
 // ============================================
@@ -441,12 +460,13 @@ function init() {
     // 7. Initialize LanguageManager and language-dependent UI
     if (typeof LanguageManager !== 'undefined') {
         LanguageManager.setLanguage('glossa').then(() => {
-            console.log('🌐 Language initialized:', LanguageManager.getCurrentLanguage());
+            const currentLang = LanguageManager.getCurrentLanguage();
+            console.log('🌐 Language initialized:', currentLang);
             initLanguageDependentUI();
             
             // Set FileBrowser root to current language content folder
             if (typeof FileBrowser !== 'undefined') {
-                FileBrowser.setRoot('glossa');
+                FileBrowser.setRoot(currentLang);
             }
         }).catch(err => {
             console.warn('Language initialization warning:', err);
@@ -461,14 +481,42 @@ function init() {
         }
         
         window.addEventListener('languageChanged', (e) => {
-            console.log('🔄 Language changed to:', e.detail.language);
+            const newLang = e.detail.language;
+            console.log('🔄 Language changed to:', newLang);
+            
+            // Update selector if needed
             const selector = document.getElementById('language-selector');
-            if (selector && selector.value !== e.detail.language) {
-                selector.value = e.detail.language;
+            if (selector && selector.value !== newLang) {
+                selector.value = newLang;
             }
-            initLanguageDependentUI();
-            if (gridEditor) gridEditor.refresh();
-            else updateEditor();
+            
+            // Sync language to students (teacher only)
+            if (typeof Collaboration !== 'undefined' && Collaboration.myRole === 'teacher') {
+                Collaboration.sendLanguageChange(newLang);
+            }
+            
+            // Update FileBrowser root to new language's content folder
+            if (typeof FileBrowser !== 'undefined') {
+                FileBrowser.setRoot(newLang);
+            }
+            
+            // Clear editor and set new language's initial code
+            const content = LanguageManager.getContent();
+            const initialCode = content?.initialCode || '';
+            if (gridEditor) {
+                gridEditor.setValue(initialCode);
+                gridEditor.render();
+            } else {
+                elements.codeEditor.value = initialCode;
+                updateEditor();
+            }
+            
+            // Regenerate keyword sidebar and dropdowns for new language
+            generateKeywordSidebar();
+            populateExerciseDropdown();
+            populateAlgorithmDropdown();
+            
+            console.log('✅ UI refreshed for language:', newLang);
         });
     } else {
         initLanguageDependentUI();

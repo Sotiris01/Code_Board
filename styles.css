@@ -1,6 +1,6 @@
 /* ============================================
-   AEPP Board - Styles
-   Dark Theme IDE-like Design for ΓΛΩΣΣΑ
+   Code Board - Styles
+   Modern VS Code-like Dark Theme Design
    ============================================ */
 
 /* CSS Variables for Easy Theming */
@@ -11,6 +11,18 @@
     --bg-tertiary: #2d2d30;
     --bg-editor: #1e1e1e;
     --bg-line-numbers: #1e1e1e;
+    
+    /* Activity Bar & Sidebar */
+    --bg-activity-bar: #333333;
+    --bg-sidebar: #252526;
+    --bg-sidebar-header: #383838;
+    --activity-icon-active: #ffffff;
+    --activity-icon-inactive: #858585;
+    --activity-indicator: #007acc;
+    
+    /* Status Bar */
+    --bg-statusbar: #007acc;
+    --text-statusbar: #ffffff;
     
     --text-primary: #d4d4d4;
     --text-secondary: #858585;
@@ -36,8 +48,10 @@
     --syntax-function: #dcdcaa;
     
     /* Spacing */
-    --toolbar-height: 60px;
-    --statusbar-height: 30px;
+    --toolbar-height: 50px;
+    --statusbar-height: 24px;
+    --activity-bar-width: 48px;
+    --sidebar-width: 280px;
     --line-number-width: 50px;
     
     /* Typography - Dyslexia Friendly Defaults */
@@ -58,6 +72,18 @@ body.light-theme {
     --bg-tertiary: #dcdcdc;
     --bg-editor: #ffffff;
     --bg-line-numbers: #f0f0f0;
+    
+    /* Activity Bar & Sidebar - Light */
+    --bg-activity-bar: #2c2c2c;
+    --bg-sidebar: #f3f3f3;
+    --bg-sidebar-header: #e8e8e8;
+    --activity-icon-active: #ffffff;
+    --activity-icon-inactive: #858585;
+    --activity-indicator: #007acc;
+    
+    /* Status Bar - Light */
+    --bg-statusbar: #007acc;
+    --text-statusbar: #ffffff;
     
     --text-primary: #1e1e1e;
     --text-secondary: #6e6e6e;
@@ -540,66 +566,188 @@ body.light-theme .theme-icon::before {
     color: #808080; /* Gray - punctuation */
 }
 
+/* Python-specific syntax classes */
+.syntax-decorator {
+    color: #dcdcaa; /* Yellow - decorators (@) */
+    font-weight: 600;
+}
+
+.syntax-self {
+    color: #569cd6; /* Blue - self reference */
+    font-style: italic;
+}
+
+.syntax-builtin {
+    color: #4ec9b0; /* Cyan - built-in functions */
+    font-weight: 600;
+}
+
+/* C++-specific syntax classes */
+.syntax-preprocessor {
+    color: #c586c0; /* Purple - preprocessor directives (#include, #define) */
+    font-weight: 600;
+}
+
+.syntax-type {
+    color: #4ec9b0; /* Cyan - type names (int, float, string, vector) */
+}
+
+.syntax-operator {
+    color: #d4d4d4; /* Light gray - operators */
+}
+
 /* ============================================
    STATUS BAR
+   ============================================ */
+/* ============================================
+   STATUS BAR - VS Code Style
    ============================================ */
 .status-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
     height: var(--statusbar-height);
-    padding: 0 15px;
-    background-color: #007acc;
+    padding: 0 10px;
+    background-color: var(--bg-statusbar);
     color: white;
-    font-size: 0.8rem;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 12px;
     flex-shrink: 0;
+    user-select: none;
 }
 
 .status-left,
 .status-right {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 0;
 }
 
 .status-center {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 0;
+}
+
+/* Status Bar Items */
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 8px;
+    height: 100%;
+    cursor: default;
+    transition: background-color 0.1s ease;
+}
+
+.status-item:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+.status-item.clickable {
+    cursor: pointer;
+}
+
+.status-item-icon {
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.status-item-text {
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+/* Status Separator */
+.status-separator {
+    width: 1px;
+    height: 14px;
+    background-color: rgba(255, 255, 255, 0.3);
+    margin: 0 4px;
 }
 
 /* Ngrok Stats Display */
 .ngrok-stats {
     display: flex;
     align-items: center;
-    gap: 8px;
-    background-color: rgba(0, 0, 0, 0.2);
-    padding: 2px 12px;
-    border-radius: 4px;
-    font-size: 0.75rem;
+    gap: 6px;
+    padding: 0 10px;
+    height: 100%;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 11px;
+}
+
+.ngrok-stats:hover {
+    background-color: rgba(255, 255, 255, 0.12);
 }
 
 .ngrok-icon {
-    font-size: 0.9rem;
+    font-size: 12px;
 }
 
 .ngrok-latency {
     font-weight: 600;
-    color: #7fff7f; /* Green for good latency */
+    color: #89d185; /* Green for good latency */
 }
 
 .ngrok-latency.warning {
-    color: #ffcc00; /* Yellow for moderate latency */
+    color: #cca700; /* Yellow for moderate latency */
 }
 
 .ngrok-latency.critical {
-    color: #ff6b6b; /* Red for high latency */
+    color: #f14c4c; /* Red for high latency */
 }
 
 .ngrok-region {
-    opacity: 0.9;
+    opacity: 0.85;
     text-transform: uppercase;
-    font-size: 0.7rem;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+}
+
+/* Connection Status */
+.connection-status {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0 8px;
+}
+
+.connection-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #89d185;
+}
+
+.connection-dot.disconnected {
+    background-color: #f14c4c;
+}
+
+.connection-dot.connecting {
+    background-color: #cca700;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Language indicator in status bar */
+.language-indicator {
+    padding: 0 10px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Line/Column display */
+.line-col-display {
+    padding: 0 10px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 11px;
 }
 
 .ngrok-connections {
@@ -859,30 +1007,129 @@ kbd {
 }
 
 /* ============================================
-   RIGHT SIDEBAR - KEYWORD MENU
+   SIDEBAR CONTAINER (Activity Bar + Side Panel)
    ============================================ */
-.keyword-sidebar {
-    width: 500px;
-    min-width: 200px;
-    max-width: 1000px;
-    background-color: var(--bg-secondary);
-    border-left: none;
+.sidebar-container {
     display: flex;
-    flex-direction: column;
-    overflow: hidden;
+    flex-direction: row;
+    height: 100%;
     flex-shrink: 0;
 }
 
-.sidebar-header {
-    padding: 12px 15px;
-    background-color: var(--bg-tertiary);
+/* Activity Bar - Vertical Icon Strip */
+.activity-bar {
+    width: var(--activity-bar-width);
+    background-color: var(--bg-activity-bar);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 0;
+    border-left: 1px solid var(--border-color);
+}
+
+.activity-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    margin: 2px 0;
+    border-radius: 6px;
+    transition: all var(--transition-fast);
+}
+
+.activity-icon {
+    font-size: 1.3rem;
+    color: var(--activity-icon-inactive);
+    transition: color var(--transition-fast);
+}
+
+.activity-btn:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.activity-btn:hover .activity-icon {
+    color: var(--activity-icon-active);
+}
+
+.activity-btn.active {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.activity-btn.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 24px;
+    background-color: var(--activity-indicator);
+    border-radius: 0 2px 2px 0;
+}
+
+.activity-btn.active .activity-icon {
+    color: var(--activity-icon-active);
+}
+
+.activity-spacer {
+    flex: 1;
+}
+
+/* Teacher-only activity buttons */
+.activity-btn.teacher-only {
+    display: none;
+}
+
+body.is-teacher .activity-btn.teacher-only {
+    display: flex;
+}
+
+/* Side Panel Content */
+.side-panel {
+    width: var(--sidebar-width);
+    min-width: 200px;
+    max-width: 600px;
+    background-color: var(--bg-sidebar);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-left: 1px solid var(--border-color);
+}
+
+.side-panel.collapsed {
+    display: none;
+}
+
+/* Panel Header */
+.panel-header {
+    padding: 10px 12px;
+    background-color: var(--bg-sidebar-header);
     border-bottom: 1px solid var(--border-color);
 }
 
-.sidebar-title {
-    font-size: 0.95rem;
+.panel-title {
+    font-size: 0.7rem;
     font-weight: 600;
-    color: var(--text-primary);
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Sidebar Panel (Keywords/Files content) */
+.sidebar-panel {
+    display: none;
+    flex: 1;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.sidebar-panel.active {
+    display: flex;
 }
 
 .sidebar-content {
@@ -891,18 +1138,26 @@ kbd {
     padding: 10px;
 }
 
+/* Legacy keyword-sidebar support (redirect to new structure) */
+.keyword-sidebar {
+    display: none; /* Hidden - replaced by sidebar-container */
+}
+
+/* ============================================
+   KEYWORD GROUPS & BUTTONS
+   ============================================ */
 .keyword-group {
     margin-bottom: 12px;
 }
 
 .group-title {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 600;
     color: var(--accent-blue);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: 6px;
-    padding: 4px 6px;
+    padding: 4px 8px;
     background-color: rgba(86, 156, 214, 0.1);
     border-radius: 4px;
 }
@@ -915,9 +1170,9 @@ kbd {
 
 .keyword-btn {
     font-family: var(--font-code);
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     font-weight: 500;
-    padding: 5px 8px;
+    padding: 4px 7px;
     background-color: var(--bg-tertiary);
     color: var(--syntax-keyword);
     border: 1px solid var(--border-color);
@@ -931,11 +1186,11 @@ kbd {
     background-color: var(--accent-blue);
     color: white;
     border-color: var(--accent-blue);
-    transform: scale(1.05);
+    transform: scale(1.02);
 }
 
 .keyword-btn:active {
-    transform: scale(0.95);
+    transform: scale(0.98);
 }
 
 /* Keyword button variations */
@@ -988,59 +1243,6 @@ kbd {
 }
 
 /* ============================================
-   SIDEBAR TABS
-   ============================================ */
-.sidebar-tabs {
-    display: flex;
-    background-color: var(--bg-tertiary);
-    border-bottom: 1px solid var(--border-color);
-}
-
-.sidebar-tab {
-    flex: 1;
-    padding: 10px 8px;
-    background: transparent;
-    border: none;
-    color: var(--text-secondary);
-    font-size: 0.75rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    border-bottom: 2px solid transparent;
-}
-
-.sidebar-tab:hover {
-    color: var(--text-primary);
-    background-color: rgba(255, 255, 255, 0.05);
-}
-
-.sidebar-tab.active {
-    color: var(--accent-blue);
-    border-bottom-color: var(--accent-blue);
-    background-color: var(--bg-secondary);
-}
-
-/* Teacher-only elements - hidden by default, shown via JS */
-.sidebar-tab.teacher-only {
-    display: none;
-}
-
-body.is-teacher .sidebar-tab.teacher-only {
-    display: flex;
-}
-
-.sidebar-panel {
-    display: none;
-    flex: 1;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-.sidebar-panel.active {
-    display: flex;
-}
-
-/* ============================================
    FILE BROWSER
    ============================================ */
 .file-browser {
@@ -1055,10 +1257,10 @@ body.is-teacher .sidebar-tab.teacher-only {
     flex-wrap: wrap;
     align-items: center;
     gap: 4px;
-    padding: 10px 12px;
-    background-color: var(--bg-tertiary);
+    padding: 8px 12px;
+    background-color: var(--bg-sidebar-header);
     border-bottom: 1px solid var(--border-color);
-    font-size: 0.75rem;
+    font-size: 0.7rem;
 }
 
 .breadcrumb-item {

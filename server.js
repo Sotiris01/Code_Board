@@ -160,7 +160,8 @@ let currentState = {
     code: '',
     cursorPosition: 0,
     lastUpdatedBy: null,
-    connectedUsers: []
+    connectedUsers: [],
+    language: 'glossa' // Current language (synced from teacher)
 };
 
 // Teacher password from environment variable (optional)
@@ -233,7 +234,8 @@ wss.on('connection', (ws, req) => {
         type: 'init',
         state: {
             code: currentState.code,
-            cursorPosition: currentState.cursorPosition
+            cursorPosition: currentState.cursorPosition,
+            language: currentState.language
         },
         yourId: clientId,
         yourRole: clientInfo.role,
@@ -388,7 +390,20 @@ wss.on('connection', (ws, req) => {
                         loadedBy: client.name
                     }, ws);
                     break;
-                    
+                
+                case 'language_change':
+                    // Teacher changed language - sync to all students
+                    if (client.role === 'teacher') {
+                        currentState.language = message.language;
+                        console.log(`🌐 Language changed to: ${message.language}`);
+                        broadcast({
+                            type: 'language_change',
+                            language: message.language,
+                            changedBy: client.name
+                        }, ws);
+                    }
+                    break;
+                
                 case 'hand_raise':
                     // Student raised/lowered hand - notify teacher
                     console.log(`${message.raised ? '✋' : '👇'} ${client.name} ${message.raised ? 'σήκωσε' : 'κατέβασε'} το χέρι`);
@@ -541,7 +556,7 @@ app.get('/api/files', (req, res) => {
         
         const items = fs.readdirSync(fullPath, { withFileTypes: true });
         const result = items
-            .filter(item => item.isDirectory() || item.name.endsWith('.gls'))
+            .filter(item => item.isDirectory() || item.name.endsWith('.gls') || item.name.endsWith('.py') || item.name.endsWith('.cpp') || item.name.endsWith('.h') || item.name.endsWith('.java'))
             .map(item => ({
                 name: item.name,
                 type: item.isDirectory() ? 'folder' : 'file',
@@ -586,9 +601,11 @@ app.get('/api/files/content', (req, res) => {
         return res.status(403).json({ error: `Access denied: path outside content directory` });
     }
     
-    // Only allow .gls files
-    if (!filePath.endsWith('.gls')) {
-        return res.status(400).json({ error: `Only .gls files are allowed: ${filePath}` });
+    // Allow .gls, .py, .cpp, .h, .hpp, .java files
+    const allowedExtensions = ['.gls', '.py', '.cpp', '.h', '.hpp', '.c', '.java'];
+    const fileExt = path.extname(filePath).toLowerCase();
+    if (!allowedExtensions.includes(fileExt)) {
+        return res.status(400).json({ error: `File type not allowed: ${filePath}. Allowed: ${allowedExtensions.join(', ')}` });
     }
     
     try {

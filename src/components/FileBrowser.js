@@ -15,10 +15,22 @@ const FileBrowser = {
      * Initialize file browser
      */
     init() {
-        // Set up tab switching
+        // Set up activity bar panel switching
+        const activityBtns = document.querySelectorAll('.activity-btn[data-panel]');
+        activityBtns.forEach(btn => {
+            btn.addEventListener('click', () => this.switchPanel(btn.dataset.panel));
+        });
+        
+        // Set up toggle sidebar button
+        const toggleBtn = document.querySelector('.activity-btn[data-action="toggle-sidebar"]');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => this.toggleSidePanel());
+        }
+        
+        // Legacy: Set up old tab switching (fallback)
         const tabs = document.querySelectorAll('.sidebar-tab');
         tabs.forEach(tab => {
-            tab.addEventListener('click', () => this.switchTab(tab.dataset.tab));
+            tab.addEventListener('click', () => this.switchPanel(tab.dataset.tab));
         });
         
         // Set up root breadcrumb click
@@ -41,23 +53,45 @@ const FileBrowser = {
     },
     
     /**
-     * Switch between tabs
+     * Switch between panels (Activity Bar)
      */
-    switchTab(tabId) {
-        // Update tab buttons
-        document.querySelectorAll('.sidebar-tab').forEach(tab => {
-            tab.classList.toggle('active', tab.dataset.tab === tabId);
+    switchPanel(panelId) {
+        // Update activity bar buttons
+        document.querySelectorAll('.activity-btn[data-panel]').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.panel === panelId);
         });
         
         // Update panels
         document.querySelectorAll('.sidebar-panel').forEach(panel => {
-            panel.classList.toggle('active', panel.id === `${tabId}-panel`);
+            panel.classList.toggle('active', panel.id === `${panelId}-panel`);
         });
         
-        // Load files if switching to files tab
-        if (tabId === 'files') {
+        // Load files if switching to files panel
+        if (panelId === 'files') {
             this.loadFolder(this.currentPath);
         }
+    },
+    
+    /**
+     * Toggle side panel visibility
+     */
+    toggleSidePanel() {
+        const sidePanel = document.getElementById('side-panel');
+        const toggleBtn = document.querySelector('.activity-btn[data-action="toggle-sidebar"] .activity-icon');
+        
+        if (sidePanel) {
+            sidePanel.classList.toggle('collapsed');
+            if (toggleBtn) {
+                toggleBtn.textContent = sidePanel.classList.contains('collapsed') ? '▶' : '◀';
+            }
+        }
+    },
+    
+    /**
+     * Legacy alias for switchPanel
+     */
+    switchTab(tabId) {
+        this.switchPanel(tabId);
     },
     
     /**
@@ -97,6 +131,31 @@ const FileBrowser = {
     },
     
     /**
+     * Get file icon based on extension
+     */
+    getFileIcon(filename, type) {
+        if (type === 'folder') return '📁';
+        
+        const ext = filename.split('.').pop().toLowerCase();
+        const iconMap = {
+            'gls': '📘',      // GLOSSA files - blue book
+            'py': '🐍',       // Python files - snake
+            'cpp': '⚙️',      // C++ files - gear
+            'h': '📋',        // Header files - clipboard
+            'hpp': '📋',      // C++ header files
+            'c': '©️',        // C files
+            'java': '☕',     // Java files - coffee cup
+            'js': '📜',       // JavaScript
+            'json': '📦',     // JSON config
+            'md': '📝',       // Markdown
+            'txt': '📄',      // Text files
+            'tex': '📐'       // LaTeX files
+        };
+        
+        return iconMap[ext] || '📄';
+    },
+    
+    /**
      * Render file list
      */
     renderFileList(items) {
@@ -109,8 +168,8 @@ const FileBrowser = {
         
         fileList.innerHTML = items.map(item => `
             <div class="file-item ${item.type}" data-path="${item.path}" data-type="${item.type}">
-                <span class="file-icon">${item.type === 'folder' ? '📁' : '📄'}</span>
-                <span class="file-name">${item.name.replace('.gls', '')}</span>
+                <span class="file-icon">${this.getFileIcon(item.name, item.type)}</span>
+                <span class="file-name">${item.name.replace(/\.(gls|py|cpp|h)$/, '')}</span>
             </div>
         `).join('');
         

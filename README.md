@@ -1,30 +1,46 @@
 # 📝 Code Board
 
-A real-time collaborative coding whiteboard designed for teaching programming. Originally built for the **GLOSSA** (ΓΛΩΣΣΑ) programming language taught in Greek high schools, but architected to support multiple languages.
+A real-time collaborative coding whiteboard designed for teaching programming. Originally built for the **GLOSSA** (ΓΛΩΣΣΑ) programming language taught in Greek high schools, now expanded to support **Python**, **C++**, and **Java**.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Node](https://img.shields.io/badge/node-%3E%3D14.0.0-green.svg)
+![Languages](https://img.shields.io/badge/languages-4-brightgreen.svg)
 
 ## ✨ Features
+
+### 🌐 Multi-Language Support
+- **GLOSSA** (ΓΛΩΣΣΑ) — Greek educational programming language
+- **Python** — General-purpose programming with full syntax support
+- **C++** — Systems programming with preprocessor highlighting
+- **Java** — Object-oriented programming with annotation support
+
+Each language includes:
+- Syntax highlighting (keywords, types, strings, comments, operators)
+- Smart code insertion and auto-complete
+- Keyword sidebar with quick-insert buttons
+- Code templates and examples
 
 ### Real-Time Collaboration
 - **Live Code Sync** — WebSocket-based real-time code synchronization between teacher and students
 - **Cursor Tracking** — See where students are typing in real-time
 - **Tile Highlighting** — Teachers can highlight code sections that sync to all students
+- **Language Sync** — Language changes by teacher automatically sync to all students
 
 ### Teacher Tools
 - **PDF Sharing** — Load and share PDF documents (manuals, exercises) with students
 - **Laser Pointer** — Point at specific parts of code or PDFs during explanations
 - **Focus Mode** — Temporarily disable student input during demonstrations
 - **Code Templates** — Quick-insert common code patterns and algorithms
+- **Breakpoints** — Set visual breakpoints to highlight important lines
+- **Scroll-to-Line** — Navigate all students to a specific line
 
 ### Student Interaction
 - **Hand Raising** — Students can raise their hand to ask questions
-- **Reactions** — Quick emoji reactions for feedback (👍, ❓, ✅, etc.)
+- **Reactions** — Quick emoji reactions for feedback (👍 Understood, ❓ Confused, 🔄 Repeat)
 - **Follow Mode** — Automatically follow teacher's view and selections
 
 ### Editor Features
-- **Syntax Highlighting** — Language-aware code coloring
+- **Syntax Highlighting** — Language-aware code coloring for all 4 languages
 - **Smart Insertion** — Auto-complete keywords and code structures
 - **Grid-Based Editor** — Clean, whiteboard-style code presentation
 - **File Browser** — Navigate and load exercises from the content library
@@ -63,6 +79,7 @@ The server will start at `http://localhost:3000`
 2. Share your session with students using ngrok (see below)
 
 3. Use the toolbar to:
+   - Switch between languages (GLOSSA, Python, C++, Java)
    - Load exercises and templates
    - Switch between Code and PDF modes
    - Control student interaction (Focus mode)
@@ -72,7 +89,8 @@ The server will start at `http://localhost:3000`
 
 1. Open the link provided by your teacher
 2. The interface will automatically connect to the teacher's session
-3. Use the sidebar buttons to:
+3. Language changes sync automatically from the teacher
+4. Use the sidebar buttons to:
    - Raise your hand (✋)
    - Send reactions
    - Follow the teacher's cursor
@@ -126,22 +144,62 @@ This will:
 
 ```
 Code_Board/
-├── content/                 # Educational content
-│   └── glossa/             # GLOSSA language content
-│       ├── exercises/      # Practice exercises (levels 1-10)
-│       ├── templates/      # Code templates (.gls files)
-│       └── *.pdf           # Reference manuals
+├── content/                 # Educational content (per language)
+│   ├── glossa/             # GLOSSA language content
+│   │   ├── exercises/      # Practice exercises (levels 1-10)
+│   │   ├── templates/      # Code templates (.gls files)
+│   │   └── *.pdf           # Reference manuals
+│   ├── python/             # Python content
+│   │   └── templates/      # Code templates (.py files)
+│   ├── cpp/                # C++ content
+│   │   └── templates/      # Code templates (.cpp files)
+│   └── java/               # Java content
+│       └── templates/      # Code templates (.java files)
 ├── src/                    # Source code
-│   ├── components/         # UI components (GridEditor, FileBrowser, etc.)
-│   ├── core/              # Core modules (LanguageManager, SmartInserter)
-│   ├── languages/         # Language definitions (glossa/, python/, etc.)
-│   ├── modules/           # Feature modules (Collaboration)
-│   ├── ui/                # UI controllers (Toolbar, StatusBar, LayoutManager)
+│   ├── components/         # UI components
+│   │   ├── GridEditor.js       # Grid-based code editor
+│   │   ├── FileBrowser.js      # File system navigator
+│   │   ├── PdfViewer.js        # PDF.js wrapper
+│   │   ├── SyntaxHighlighter.js # Multi-language syntax highlighting
+│   │   └── UIManager.js        # UI utilities & shortcuts
+│   ├── core/              # Core modules
+│   │   ├── LanguageManager.js  # Dynamic language switching
+│   │   └── SmartInserter.js    # Auto-complete engine
+│   ├── languages/         # Language definitions
+│   │   ├── glossa/        # GLOSSA (keywords, syntax, snippets, content)
+│   │   ├── python/        # Python module
+│   │   ├── cpp/           # C++ module
+│   │   └── java/          # Java module
+│   ├── modules/           # Feature modules
+│   │   └── Collaboration.js    # WebSocket real-time sync
+│   ├── ui/                # UI controllers
+│   │   ├── Toolbar.js          # Copy, clear, font size
+│   │   ├── StatusBar.js        # Line counts, network stats
+│   │   └── LayoutManager.js    # Sidebar, mode switching
 │   └── main.js            # Application entry point
 ├── server.js              # Express + WebSocket server
 ├── index.html             # Main HTML file
-└── styles.css             # Global styles
+├── styles.css             # Global styles
+└── start-session.ps1      # Quick start script (Windows)
 ```
+
+## 🗣️ Language Support Details
+
+### File Extensions & Icons
+
+| Language | Extension | Icon | Description |
+|----------|-----------|------|-------------|
+| GLOSSA   | `.gls`    | 📘   | Greek educational language |
+| Python   | `.py`     | 🐍   | General-purpose scripting |
+| C++      | `.cpp`    | ⚙️   | Systems programming |
+| Java     | `.java`   | ☕   | Object-oriented programming |
+
+### Templates Included
+
+- **GLOSSA**: 23 templates (program, arrays, loops, functions, algorithms)
+- **Python**: 22 templates (classes, files, data structures, algorithms)
+- **C++**: 26 templates (pointers, structs, vectors, STL)
+- **Java**: 5 templates (classes, control flow, I/O)
 
 ## 🔧 Configuration
 
@@ -153,14 +211,20 @@ Create a `.env` file (optional):
 PORT=3000
 ```
 
-### Language Support
+### Teacher Password Protection
 
-Currently supported:
-- **GLOSSA** (ΓΛΩΣΣΑ) — Greek educational programming language
+To protect the teacher interface, set `TEACHER_PASSWORD` environment variable:
 
-Planned:
-- Python
-- C++
+```env
+TEACHER_PASSWORD=your_secure_password
+```
+
+## 🛠️ Technology Stack
+
+- **Backend**: Node.js, Express.js, WebSocket (ws)
+- **Frontend**: Vanilla JavaScript, Custom Grid Editor
+- **PDF**: PDF.js for document rendering
+- **Communication**: WebSocket for real-time collaboration
 
 ## 🤝 Contributing
 
@@ -171,6 +235,26 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
+
+### Adding a New Language
+
+To add support for a new programming language:
+
+1. Create `src/languages/[lang]/` directory with:
+   - `keywords.js` — Keywords, types, and SIDEBAR_CONFIG
+   - `syntax.js` — Syntax highlighting rules
+   - `snippets.js` — Smart insertion and templates
+   - `content.js` — Content provider
+
+2. Register in `src/core/LanguageManager.js`
+
+3. Add to UI selector in `index.html`
+
+4. Add highlighting in `src/components/SyntaxHighlighter.js`
+
+5. Update `server.js` to allow file extension
+
+6. Create `content/[lang]/templates/` with example files
 
 ## 📄 License
 

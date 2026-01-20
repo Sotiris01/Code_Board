@@ -44,10 +44,46 @@ const LanguageManager = (function() {
             ],
             namespace: 'Glossa',
             loaded: false
+        },
+        python: {
+            code: 'python',
+            name: 'Python',
+            displayName: 'Python',
+            files: [
+                'src/languages/python/keywords.js',
+                'src/languages/python/snippets.js',
+                'src/languages/python/syntax.js',
+                'src/languages/python/content.js'
+            ],
+            namespace: 'Python',
+            loaded: false
+        },
+        cpp: {
+            code: 'cpp',
+            name: 'C++',
+            displayName: 'C++',
+            files: [
+                'src/languages/cpp/keywords.js',
+                'src/languages/cpp/snippets.js',
+                'src/languages/cpp/syntax.js',
+                'src/languages/cpp/content.js'
+            ],
+            namespace: 'Cpp',
+            loaded: false
+        },
+        java: {
+            code: 'java',
+            name: 'Java',
+            displayName: 'Java',
+            files: [
+                'src/languages/java/keywords.js',
+                'src/languages/java/snippets.js',
+                'src/languages/java/syntax.js',
+                'src/languages/java/content.js'
+            ],
+            namespace: 'Java',
+            loaded: false
         }
-        // Future languages will be added here:
-        // python: { code: 'python', name: 'Python', ... },
-        // cpp: { code: 'cpp', name: 'C++', ... }
     };
 
     /**
@@ -153,9 +189,21 @@ const LanguageManager = (function() {
     function getLanguageModule(langCode) {
         const lang = registry[langCode];
         if (!lang || !lang.loaded) {
+            console.warn('[LanguageManager] getLanguageModule: Language not loaded', {
+                langCode,
+                inRegistry: !!lang,
+                loaded: lang?.loaded
+            });
             return null;
         }
-        return window.Languages[lang.namespace] || null;
+        const module = window.Languages[lang.namespace] || null;
+        console.log('[LanguageManager] getLanguageModule:', {
+            langCode,
+            namespace: lang.namespace,
+            moduleFound: !!module,
+            moduleKeys: module ? Object.keys(module) : []
+        });
+        return module;
     }
 
     // ===========================================
@@ -324,11 +372,21 @@ const LanguageManager = (function() {
          * @returns {Array|null} Sidebar config array or null
          */
         getSidebarConfig() {
-            if (!currentLanguageCode) return null;
+            if (!currentLanguageCode) {
+                console.warn('[LanguageManager] getSidebarConfig: No current language');
+                return null;
+            }
 
             const langModule = getLanguageModule(currentLanguageCode);
+            console.log('[LanguageManager] getSidebarConfig:', {
+                currentLanguage: currentLanguageCode,
+                langModule: !!langModule,
+                hasKeywords: !!(langModule && langModule.keywords),
+                hasSidebarConfig: !!(langModule && langModule.keywords && langModule.keywords.SIDEBAR_CONFIG)
+            });
+            
             if (!langModule || !langModule.keywords || !langModule.keywords.SIDEBAR_CONFIG) {
-                // Fallback to global for backward compatibility
+                console.warn('[LanguageManager] Falling back to global SIDEBAR_CONFIG');
                 return window.SIDEBAR_CONFIG || null;
             }
 

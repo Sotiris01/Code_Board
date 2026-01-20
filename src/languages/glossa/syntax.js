@@ -55,8 +55,9 @@ window.Languages.Glossa = window.Languages.Glossa || {};
     }
     
     // STEP 1: Protect comments first (highest priority)
+    // Match ! and everything after it (inline comments too)
     highlighted = highlighted.replace(
-        /^(!.*)$/gm,
+        /(!.*)$/gm,
         (match) => protect(`<span class="syntax-comment">${match}</span>`)
     );
     

@@ -397,6 +397,14 @@ const Collaboration = {
                         console.log('👨‍🎓 Student loading code from server');
                         this.updateEditorContent(message.state.code, false); // No undo for initial load
                     }
+                    // Student: Sync language from server state
+                    if (message.state.language && typeof LanguageManager !== 'undefined') {
+                        const currentLang = LanguageManager.getCurrentLanguage();
+                        if (currentLang !== message.state.language) {
+                            console.log(`🌐 Student syncing language: ${message.state.language}`);
+                            this.syncLanguage(message.state.language);
+                        }
+                    }
                 }
                 
                 this.updateUserList();
@@ -531,6 +539,15 @@ const Collaboration = {
                 // Teacher sent scroll-to-line command (students receive)
                 this.handleScrollToLine(message);
                 break;
+            
+            case 'language_change':
+                // Teacher changed language (students receive)
+                if (this.myRole === 'student') {
+                    console.log(`🌐 Teacher changed language to: ${message.language}`);
+                    this.syncLanguage(message.language);
+                    showToast(`🌐 Γλώσσα: ${message.language.toUpperCase()}`, 'info');
+                }
+                break;
                 
             case 'pong':
                 // Keep-alive response
@@ -650,6 +667,48 @@ const Collaboration = {
                 type: 'clear_reactions'
             }));
         }
+    },
+    
+    /**
+     * Send language change to server (teacher only)
+     */
+    sendLanguageChange(language) {
+        if (this.myRole !== 'teacher') return;
+        
+        if (this.connected && this.ws.readyState === WebSocket.OPEN) {
+            console.log(`🌐 Teacher sending language change: ${language}`);
+            this._send(JSON.stringify({
+                type: 'language_change',
+                language: language
+            }));
+        }
+    },
+    
+    /**
+     * Sync language from server/teacher (student receives)
+     */
+    syncLanguage(language) {
+        if (typeof LanguageManager === 'undefined') return;
+        
+        const currentLang = LanguageManager.getCurrentLanguage();
+        if (currentLang === language) return;
+        
+        // Update language selector UI
+        const languageSelector = document.getElementById('language-selector');
+        if (languageSelector) {
+            languageSelector.value = language;
+        }
+        
+        // Set language via LanguageManager
+        LanguageManager.setLanguage(language).then(() => {
+            // Re-render editor to apply new syntax highlighting
+            if (typeof gridEditor !== 'undefined' && gridEditor) {
+                gridEditor.render();
+            }
+            console.log(`✅ Language synced to: ${language}`);
+        }).catch(err => {
+            console.error('Failed to sync language:', err);
+        });
     },
     
     /**
