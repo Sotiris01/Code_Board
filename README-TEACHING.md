@@ -1,111 +1,125 @@
-# 🎓 AEPP Board - Οδηγίες Χρήσης για Εξ Αποστάσεως Διδασκαλία
+# 🎓 Code Board - Teaching Guide for Remote Lessons
 
-## 📋 Γρήγορη Εκκίνηση
+## 📋 Quick Start
 
-### Μέθοδος 1: PowerShell Script (Συνιστάται)
+### Method 1: PowerShell Script (Recommended)
+
 ```powershell
-# Άνοιξε PowerShell και τρέξε:
-cd "d:\Μαθήματα\Thiseas Vrettos\aepp_board"
+# Open PowerShell and run:
+cd "path/to/code-board"
 .\start-session.ps1
 ```
 
-### Μέθοδος 2: Χειροκίνητα
+### Method 2: Manual Setup
+
 ```powershell
-# Terminal 1: Ξεκίνα τον server
-cd "d:\Μαθήματα\Thiseas Vrettos\aepp_board"
+# Terminal 1: Start the server
+cd "path/to/code-board"
 npm start
 
-# Terminal 2: Ξεκίνα το ngrok
+# Terminal 2: Start ngrok
 ngrok http 3000
 ```
 
 ---
 
-## 🔄 Βήμα-βήμα Οδηγίες
+## 🔄 Step-by-Step Instructions
 
-### 1️⃣ Πριν το μάθημα
-1. Άνοιξε το **VS Code**
-2. Άνοιξε terminal και τρέξε το script εκκίνησης
-3. Θα ανοίξει αυτόματα ο browser σου ως **καθηγητής**
+### 1️⃣ Before the Lesson
 
-### 2️⃣ Έναρξη μαθήματος
-1. Στο terminal του **ngrok** θα δεις:
+1. Open **VS Code**
+2. Open a terminal and run the startup script
+3. Your browser will automatically open as **teacher**
+
+### 2️⃣ Starting the Lesson
+
+1. In the **ngrok** terminal you will see:
    ```
    Forwarding   https://xxxx-xx-xxx-xxx-xx.ngrok-free.app -> http://localhost:3000
    ```
-2. **Αντίγραψε** αυτό το `https://...ngrok-free.app` link
-3. **Στείλε** το link στον μαθητή (π.χ. μέσω chat)
+2. **Copy** the `https://...ngrok-free.app` link
+3. **Send** the link to your student (e.g., via chat)
 
-### 3️⃣ Κατά τη διάρκεια του μαθήματος
-- ✏️ Και οι δύο μπορείτε να γράφετε κώδικα
-- 🔄 Οι αλλαγές συγχρονίζονται αυτόματα σε πραγματικό χρόνο
-- 📁 Χρησιμοποίησε τα **Πρότυπα** για να φορτώσεις παραδείγματα
-- 🎯 Χρησιμοποίησε τις **Ασκήσεις** για αξιολόγηση
+### 3️⃣ During the Lesson
 
-### 4️⃣ Τέλος μαθήματος
-1. Πάτα **Ctrl+C** στο terminal του ngrok
-2. Ο server θα σταματήσει αυτόματα
+- ✏️ Both of you can write code
+- 🔄 Changes sync automatically in real-time
+- 📁 Use **Templates** to load examples
+- 🎯 Use **Exercises** for assessment
+- 📄 Share **PDF** or **Markdown** documents with laser pointer
 
----
+### 4️⃣ End of Lesson
 
-## 🖥️ Τι βλέπει ο μαθητής
-
-Ο μαθητής:
-- **Δεν χρειάζεται** να κατεβάσει τίποτα
-- Απλά ανοίγει το link που του στέλνεις
-- Βλέπει τον πίνακα με syntax highlighting
-- Μπορεί να γράψει κώδικα (αν θες)
+1. Press **Ctrl+C** in the ngrok terminal
+2. The server will stop automatically
 
 ---
 
-## ⚙️ Ρυθμίσεις
+## 🖥️ What the Student Sees
 
-### Για τον καθηγητή
+The student:
+
+- **Does not need** to download anything
+- Simply opens the link you send
+- Sees the board with syntax highlighting
+- Can write code (if you allow it)
+
+---
+
+## ⚙️ Settings
+
+### For the Teacher
+
 - URL: `http://localhost:3000?role=teacher`
-- Εμφανίζεται το 👨‍🏫 icon
+- Shows the 👨‍🏫 icon
 
-### Για τον μαθητή
-- URL: Το ngrok link (χωρίς parameters)
-- Εμφανίζεται το 👨‍🎓 icon
+### For the Student
 
----
-
-## 🛠️ Αντιμετώπιση προβλημάτων
-
-### "Δεν συνδέεται ο μαθητής"
-1. Βεβαιώσου ότι το ngrok τρέχει
-2. Δώσε το HTTPS link, όχι το HTTP
-3. Ο μαθητής να κάνει refresh
-
-### "Οι αλλαγές δεν συγχρονίζονται"
-1. Έλεγξε την κατάσταση σύνδεσης (πράσινη κουκκίδα)
-2. Κάνε refresh τη σελίδα
-3. Επανεκκίνησε τον server
-
-### "Αργεί η σύνδεση"
-- Η δωρεάν έκδοση του ngrok μπορεί να έχει μικρή καθυστέρηση
-- Για καλύτερη απόδοση, σκέψου ngrok pro
+- URL: The ngrok link (without parameters)
+- Shows the 👨‍🎓 icon
 
 ---
 
-## 📌 Χρήσιμα Links
+## 🛠️ Troubleshooting
 
-| Περιγραφή | Link |
-|-----------|------|
-| Καθηγητής (τοπικά) | http://localhost:3000?role=teacher |
-| ngrok Dashboard | https://dashboard.ngrok.com |
-| Status API | http://localhost:3000/api/status |
+### "Student cannot connect"
+
+1. Make sure ngrok is running
+2. Share the HTTPS link, not HTTP
+3. Have the student refresh the page
+
+### "Changes are not syncing"
+
+1. Check the connection status (green dot)
+2. Refresh the page
+3. Restart the server
+
+### "Connection is slow"
+
+- The free version of ngrok may have slight latency
+- For better performance, consider ngrok pro
 
 ---
 
-## 🎓 Tips για αποτελεσματική διδασκαλία
+## 📌 Useful Links
 
-1. **Πριν το μάθημα**: Ετοίμασε τα παραδείγματα που θα χρησιμοποιήσεις
-2. **Χρησιμοποίησε τα Πρότυπα**: Γρήγορη φόρτωση δομών
-3. **Άσκησε τον μαθητή**: Χρησιμοποίησε τις ημιτελείς ασκήσεις
-4. **Μεγάλωσε τη γραμματοσειρά**: A+ κουμπί για dyslexia-friendly εμφάνιση
-5. **Αντιγραφή κώδικα**: 📋 κουμπί για να αντιγράψεις τον κώδικα
+| Description     | Link                               |
+| --------------- | ---------------------------------- |
+| Teacher (local) | http://localhost:3000?role=teacher |
+| ngrok Dashboard | https://dashboard.ngrok.com        |
+| Status API      | http://localhost:3000/api/status   |
 
 ---
 
-*Τελευταία ενημέρωση: Ιανουάριος 2026*
+## 🎓 Tips for Effective Teaching
+
+1. **Before the lesson**: Prepare the examples you will use
+2. **Use Templates**: Quick loading of code structures
+3. **Practice with exercises**: Use incomplete exercises for hands-on learning
+4. **Increase font size**: A+ button for dyslexia-friendly display
+5. **Copy code**: 📋 button to copy code to clipboard
+6. **Use laser pointer**: Point at specific code sections in PDF/Markdown views
+
+---
+
+*Last updated: January 2026*
