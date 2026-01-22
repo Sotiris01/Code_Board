@@ -1,63 +1,63 @@
-# AEPP Board - Start Teaching Session
-# Ξεκινά τον collaborative server και το ngrok
+# CODE Board - Start Teaching Session
+# Starts the collaborative server and ngrok
 
 Write-Host ""
 Write-Host "╔════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-Write-Host "║       🎓 CODE Board - Εκκίνηση Συνεδρίας Διδασκαλίας      ║" -ForegroundColor Cyan
+Write-Host "║       🎓 CODE Board - Start Teaching Session              ║" -ForegroundColor Cyan
 Write-Host "╚════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
 Write-Host ""
 
-# Μετάβαση στον φάκελο
+# Navigate to script folder
 $scriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $scriptPath
 
-# Έλεγχος αν υπάρχει ο server.js
+# Check if server.js exists
 if (-not (Test-Path "server.js")) {
-    Write-Host "❌ Σφάλμα: Δεν βρέθηκε το server.js" -ForegroundColor Red
+    Write-Host "❌ Error: server.js not found" -ForegroundColor Red
     exit 1
 }
 
-# Έλεγχος αν είναι εγκατεστημένα τα dependencies
+# Check if dependencies are installed
 if (-not (Test-Path "node_modules")) {
-    Write-Host "📦 Εγκατάσταση dependencies..." -ForegroundColor Yellow
+    Write-Host "📦 Installing dependencies..." -ForegroundColor Yellow
     npm install
 }
 
-# Ξεκίνα τον Node.js server στο background
-Write-Host "🚀 Εκκίνηση server..." -ForegroundColor Green
+# Start Node.js server in background
+Write-Host "🚀 Starting server..." -ForegroundColor Green
 $serverJob = Start-Job -ScriptBlock {
     param($path)
     Set-Location $path
     node server.js
 } -ArgumentList $scriptPath
 
-# Περίμενε λίγο να ξεκινήσει ο server
+# Wait a bit for server to start
 Start-Sleep -Seconds 2
 
-# Ξεκίνα το ngrok
-Write-Host "🌐 Εκκίνηση ngrok tunnel..." -ForegroundColor Green
+# Start ngrok
+Write-Host "🌐 Starting ngrok tunnel..." -ForegroundColor Green
 Write-Host ""
 
-# Άνοιξε το browser για τον καθηγητή
+# Open browser for teacher
 Start-Process "http://localhost:3000?role=teacher"
 
 Write-Host "╔════════════════════════════════════════════════════════════╗" -ForegroundColor Yellow
-Write-Host "║  📋 ΟΔΗΓΙΕΣ:                                               ║" -ForegroundColor Yellow
+Write-Host "║  📋 INSTRUCTIONS:                                          ║" -ForegroundColor Yellow
 Write-Host "║                                                            ║" -ForegroundColor Yellow
-Write-Host "║  1. Θα ανοίξει νέο παράθυρο με το ngrok                   ║" -ForegroundColor Yellow
-Write-Host "║  2. Αντίγραψε το 'Forwarding' URL (https://xxxx.ngrok.io) ║" -ForegroundColor Yellow
-Write-Host "║  3. Στείλε αυτό το link στον μαθητή                       ║" -ForegroundColor Yellow
+Write-Host "║  1. A new ngrok window will open                          ║" -ForegroundColor Yellow
+Write-Host "║  2. Copy the 'Forwarding' URL (https://xxxx.ngrok.io)     ║" -ForegroundColor Yellow
+Write-Host "║  3. Send this link to students                            ║" -ForegroundColor Yellow
 Write-Host "║                                                            ║" -ForegroundColor Yellow
-Write-Host "║  Για να σταματήσεις: Πάτα Ctrl+C στο ngrok παράθυρο       ║" -ForegroundColor Yellow
+Write-Host "║  To stop: Press Ctrl+C in the ngrok window                ║" -ForegroundColor Yellow
 Write-Host "╚════════════════════════════════════════════════════════════╝" -ForegroundColor Yellow
 Write-Host ""
 
-# Εκτέλεση ngrok (blocking - θα κρατήσει ανοιχτό το terminal)
+# Run ngrok (blocking - keeps the terminal open)
 ngrok http 3000
 
-# Cleanup όταν κλείσει το ngrok
+# Cleanup when ngrok closes
 Write-Host ""
-Write-Host "🛑 Τερματισμός session..." -ForegroundColor Red
+Write-Host "🛑 Stopping session..." -ForegroundColor Red
 Stop-Job $serverJob -ErrorAction SilentlyContinue
 Remove-Job $serverJob -ErrorAction SilentlyContinue
-Write-Host "✅ Η συνεδρία τερματίστηκε" -ForegroundColor Green
+Write-Host "✅ Session terminated" -ForegroundColor Green

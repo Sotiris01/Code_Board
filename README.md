@@ -28,7 +28,9 @@ Each language includes:
 
 ### Teacher Tools
 - **PDF Sharing** — Load and share PDF documents (manuals, exercises) with students
-- **Laser Pointer** — Point at specific parts of code or PDFs during explanations
+- **Markdown Sharing** — Load and share Markdown files with live rendering and sync
+- **Laser Pointer** — Point at specific parts of code, PDFs, or Markdown during explanations
+- **Auto-Scroll Sync** — Students automatically follow teacher's scroll position in PDF/Markdown
 - **Focus Mode** — Temporarily disable student input during demonstrations
 - **Code Templates** — Quick-insert common code patterns and algorithms
 - **Breakpoints** — Set visual breakpoints to highlight important lines
@@ -81,7 +83,7 @@ The server will start at `http://localhost:3000`
 3. Use the toolbar to:
    - Switch between languages (GLOSSA, Python, C++, Java)
    - Load exercises and templates
-   - Switch between Code and PDF modes
+   - Switch between Code, PDF, and Markdown modes
    - Control student interaction (Focus mode)
    - Use the laser pointer for demonstrations
 
@@ -159,6 +161,7 @@ Code_Board/
 │   ├── components/         # UI components
 │   │   ├── GridEditor.js       # Grid-based code editor
 │   │   ├── FileBrowser.js      # File system navigator
+│   │   ├── MarkdownViewer.js   # Markdown renderer with sync
 │   │   ├── PdfViewer.js        # PDF.js wrapper
 │   │   ├── SyntaxHighlighter.js # Multi-language syntax highlighting
 │   │   └── UIManager.js        # UI utilities & shortcuts
@@ -193,6 +196,8 @@ Code_Board/
 | Python   | `.py`     | 🐍   | General-purpose scripting |
 | C++      | `.cpp`    | ⚙️   | Systems programming |
 | Java     | `.java`   | ☕   | Object-oriented programming |
+| Markdown | `.md`     | 📄   | Documentation and notes |
+| PDF      | `.pdf`    | 📕   | Reference documents |
 
 ### Templates Included
 
@@ -224,6 +229,7 @@ TEACHER_PASSWORD=your_secure_password
 - **Backend**: Node.js, Express.js, WebSocket (ws)
 - **Frontend**: Vanilla JavaScript, Custom Grid Editor
 - **PDF**: PDF.js for document rendering
+- **Markdown**: marked.js for Markdown parsing and rendering
 - **Communication**: WebSocket for real-time collaboration
 
 ## 🤝 Contributing

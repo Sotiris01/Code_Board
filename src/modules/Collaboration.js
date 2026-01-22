@@ -1,6 +1,6 @@
 /**
  * AEPP Board - WebSocket Collaboration Client
- * Συγχρονισμός κώδικα σε πραγματικό χρόνο
+ * Real-time code synchronization
  */
 
 /**
@@ -37,6 +37,7 @@ const Collaboration = {
     connected: false,
     myId: null,
     myRole: null,
+    myName: null,  // Our display name (Teacher, Student 1, etc.)
     connectedUsers: [],
     isUpdatingFromRemote: false,
     reconnectAttempts: 0,
@@ -59,6 +60,9 @@ const Collaboration = {
     sessionStartTime: null,
     sessionTimerInterval: null,
     
+    // Flag to indicate content was loaded from server (prevents init() from overwriting)
+    contentLoadedFromServer: false,
+    
     // Throttled functions (initialized in init)
     _throttledSendCursor: null,
     _throttledSendLaser: null,
@@ -73,7 +77,7 @@ const Collaboration = {
     _trafficInterval: null,
     
     /**
-     * Αρχικοποίηση WebSocket σύνδεσης
+     * Initialize WebSocket connection
      */
     init() {
         // Initialize throttled functions
@@ -93,7 +97,7 @@ const Collaboration = {
         // Initialize offline detection
         this._initOfflineDetection();
         
-        // Προσδιορισμός αν είναι teacher ή student
+        // Determine if teacher or student
         const urlParams = new URLSearchParams(window.location.search);
         const role = urlParams.get('role') || 'student';
         
@@ -143,7 +147,7 @@ const Collaboration = {
                 indicator.className = 'offline-indicator';
                 indicator.innerHTML = `
                     <span class="offline-icon">📴</span>
-                    <span class="offline-text">Εκτός σύνδεσης</span>
+                    <span class="offline-text">Offline</span>
                 `;
                 document.body.appendChild(indicator);
             }
@@ -164,9 +168,9 @@ const Collaboration = {
             const config = await response.json();
             
             if (config.teacherPasswordRequired) {
-                const password = prompt('🔐 Εισάγετε τον κωδικό καθηγητή:');
+                const password = prompt('🔐 Enter teacher password:');
                 if (!password) {
-                    alert('Δεν εισήχθη κωδικός. Συνδεθείτε ως μαθητής.');
+                    alert('No password entered. Connecting as student.');
                     window.location.href = window.location.pathname; // Reload as student
                     return;
                 }
@@ -184,11 +188,20 @@ const Collaboration = {
      * Connect with role and optional password
      */
     _connectWithRole(role, password) {
-        // Δημιουργία WebSocket URL
+        // Create WebSocket URL
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         let wsUrl = `${protocol}//${window.location.host}?role=${role}`;
         if (password) {
             wsUrl += `&password=${encodeURIComponent(password)}`;
+        }
+        
+        // Student identity persistence: check localStorage for saved ID
+        if (role === 'student') {
+            const savedStudentId = localStorage.getItem('code_board_student_id');
+            if (savedStudentId) {
+                console.log(`🔄 Reconnecting with saved student ID: ${savedStudentId}`);
+                wsUrl += `&studentId=${encodeURIComponent(savedStudentId)}`;
+            }
         }
         
         this.connect(wsUrl);
@@ -279,21 +292,21 @@ const Collaboration = {
     },
     
     /**
-     * Σύνδεση στον WebSocket server
+     * Connect to WebSocket server
      */
     connect(url) {
-        console.log('🔌 Σύνδεση στον server...', url);
+        console.log('🔌 Connecting to server...', url);
         
         try {
             this.ws = new WebSocket(url);
             
             this.ws.onopen = () => {
-                console.log('✅ Συνδέθηκε στον server!');
+                console.log('✅ Connected to server!');
                 this.connected = true;
                 this.reconnectAttempts = 0;
                 this.updateConnectionStatus(true);
                 
-                // Καθαρισμός τυχόν υπολειμμάτων από προηγούμενες συνεδρίες
+                // Cleanup any remnants from previous sessions
                 this.cleanupRemoteElements();
             };
             
@@ -304,7 +317,7 @@ const Collaboration = {
             };
             
             this.ws.onclose = () => {
-                console.log('❌ Αποσυνδέθηκε από τον server');
+                console.log('❌ Disconnected from server');
                 this.connected = false;
                 this.updateConnectionStatus(false);
                 this.attemptReconnect(url);
@@ -314,13 +327,13 @@ const Collaboration = {
                 console.error('WebSocket error:', error);
             };
         } catch (error) {
-            console.error('Σφάλμα σύνδεσης:', error);
+            console.error('Connection error:', error);
             this.updateConnectionStatus(false);
         }
     },
     
     /**
-     * Προσπάθεια επανασύνδεσης με exponential backoff
+     * Attempt reconnection with exponential backoff
      */
     attemptReconnect(url) {
         this.reconnectAttempts++;
@@ -328,7 +341,7 @@ const Collaboration = {
         const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
         this.reconnectDelay = delay;
         
-        console.log(`🔄 Επανασύνδεση σε ${delay/1000}s... (προσπάθεια ${this.reconnectAttempts})`);
+        console.log(`🔄 Reconnecting in ${delay/1000}s... (attempt ${this.reconnectAttempts})`);
         
         // Show countdown in UI
         this.updateReconnectCountdown(delay / 1000);
@@ -355,18 +368,18 @@ const Collaboration = {
     updateReconnectCountdown(seconds) {
         let statusEl = document.getElementById('collab-status');
         if (statusEl) {
-            statusEl.innerHTML = `<span style="color: #ffa500;">⏳ Επανασύνδεση σε ${seconds}s (προσπ. ${this.reconnectAttempts})</span>`;
+            statusEl.innerHTML = `<span style="color: #ffa500;">⏳ Reconnecting in ${seconds}s (attempt ${this.reconnectAttempts})</span>`;
         }
     },
     
     /**
-     * Διαχείριση εισερχόμενων μηνυμάτων
+     * Handle incoming messages
      */
     handleMessage(message) {
         switch (message.type) {
             case 'auth_error':
                 // Authentication failed
-                alert('❌ ' + (message.message || 'Σφάλμα αυθεντικοποίησης'));
+                alert('❌ ' + (message.message || 'Authentication error'));
                 console.error('Auth error:', message.message);
                 // Redirect to student mode
                 window.location.href = window.location.pathname;
@@ -377,28 +390,59 @@ const Collaboration = {
                 this.myRole = message.yourRole;
                 this.connectedUsers = message.connectedUsers;
                 
-                // Καθαρισμός remote elements - σημαντικό ειδικά για teacher
+                // Find and set our own name from connectedUsers
+                const me = this.connectedUsers.find(u => u.id === this.myId);
+                this.myName = me ? me.name : (this.myRole === 'teacher' ? 'Teacher' : 'Unknown');
+                console.log(`👤 My name: ${this.myName} (role: ${this.myRole}, id: ${this.myId})`);
+                
+                // Save student ID to localStorage for reconnection persistence
+                if (this.myRole === 'student' && message.yourId) {
+                    localStorage.setItem('code_board_student_id', message.yourId);
+                    console.log(`💾 Saved student ID to localStorage: ${message.yourId}`);
+                }
+                
+                // Cleanup remote elements - important especially for teacher
                 this.cleanupRemoteElements();
                 
                 // Handle based on role
                 if (this.myRole === 'teacher') {
-                    // Teacher: Send current code to server to sync state
-                    // Don't overwrite teacher's code with server state
-                    if (typeof gridEditor !== 'undefined' && gridEditor) {
-                        const currentCode = gridEditor.getValue();
-                        if (currentCode && currentCode.trim()) {
-                            console.log('👨‍🏫 Teacher sending initial code to server');
-                            this.sendCodeUpdate(currentCode);
+                    // Teacher reconnection logic:
+                    // If server has existing code, load it (don't overwrite class work!)
+                    // Only send local code if server state is empty
+                    const serverHasCode = message.state && message.state.code && message.state.code.trim();
+                    
+                    if (serverHasCode) {
+                        console.log('👨‍🏫 Teacher loading existing code from server (preserving class work)');
+                        this.contentLoadedFromServer = true; // Prevent main.js init from overwriting
+                        this.updateEditorContent(message.state.code, false); // No undo for initial load
+                        
+                        // Sync language if server has it
+                        if (message.state.language && typeof LanguageManager !== 'undefined') {
+                            const currentLang = LanguageManager.getCurrentLanguage();
+                            if (currentLang !== message.state.language) {
+                                console.log(`🌐 Teacher syncing language: ${message.state.language}`);
+                                this.syncLanguage(message.state.language);
+                            }
+                        }
+                    } else {
+                        // Server is empty - send teacher's initial code
+                        if (typeof gridEditor !== 'undefined' && gridEditor) {
+                            const currentCode = gridEditor.getValue();
+                            if (currentCode && currentCode.trim()) {
+                                console.log('👨‍🏫 Teacher sending initial code to empty server');
+                                this.sendCodeUpdate(currentCode);
+                            }
                         }
                     }
                 } else {
                     // Student: Load code from server state
-                    if (message.state.code) {
+                    if (message.state && message.state.code) {
                         console.log('👨‍🎓 Student loading code from server');
+                        this.contentLoadedFromServer = true; // Prevent main.js init from overwriting
                         this.updateEditorContent(message.state.code, false); // No undo for initial load
                     }
                     // Student: Sync language from server state
-                    if (message.state.language && typeof LanguageManager !== 'undefined') {
+                    if (message.state && message.state.language && typeof LanguageManager !== 'undefined') {
                         const currentLang = LanguageManager.getCurrentLanguage();
                         if (currentLang !== message.state.language) {
                             console.log(`🌐 Student syncing language: ${message.state.language}`);
@@ -408,17 +452,17 @@ const Collaboration = {
                 }
                 
                 this.updateUserList();
-                console.log(`📍 Συνδέθηκες ως ${message.yourRole} (ID: ${message.yourId})`);
-                showToast(`👋 Καλωσήρθες!`, 'success');
+                console.log(`📍 Connected as ${message.yourRole} (ID: ${message.yourId})`);
+                showToast(`👋 Welcome!`, 'success');
                 break;
                 
             case 'code_update':
-                // Άλλος χρήστης άλλαξε τον κώδικα
+                // Another user changed the code
                 if (!this.isUpdatingFromRemote) {
                     this.updateEditorContent(message.code);
                     // Update line numbers
-                    if (typeof updateLineNumbers === 'function') {
-                        updateLineNumbers();
+                    if (typeof StatusBar !== 'undefined' && StatusBar.updateLineNumbers) {
+                        StatusBar.updateLineNumbers();
                     }
                     // Update remote cursor if provided
                     if (message.cursorRow !== undefined && message.cursorCol !== undefined) {
@@ -428,7 +472,7 @@ const Collaboration = {
                             column: message.cursorCol
                         });
                     }
-                    // Μικρή ένδειξη ότι κάποιος έγραψε
+                    // Small indication that someone wrote
                     this.showRemoteEdit(message.updaterName);
                 }
                 break;
@@ -436,40 +480,40 @@ const Collaboration = {
             case 'template_loaded':
                 this.updateEditorContent(message.code);
                 // Update line numbers
-                if (typeof updateLineNumbers === 'function') {
-                    updateLineNumbers();
+                if (typeof StatusBar !== 'undefined' && StatusBar.updateLineNumbers) {
+                    StatusBar.updateLineNumbers();
                 }
-                showToast(`📁 Ο ${message.loadedBy} φόρτωσε: ${message.templateName}`, 'info');
+                showToast(`📁 ${message.loadedBy} loaded: ${message.templateName}`, 'info');
                 break;
                 
             case 'user_joined':
                 this.connectedUsers = message.connectedUsers;
                 this.updateUserList();
-                showToast(`👋 ${message.user.name} συνδέθηκε`, 'info');
+                showToast(`👋 ${message.user.name} connected`, 'info');
                 break;
                 
             case 'user_left':
                 this.connectedUsers = message.connectedUsers;
                 this.updateUserList();
-                showToast(`👋 ${message.userName} αποσυνδέθηκε`, 'info');
+                showToast(`👋 ${message.userName} disconnected`, 'info');
                 break;
                 
             case 'cursor_update':
-                // Εμφάνιση cursor άλλου χρήστη (μόνο για teacher)
+                // Show another user's cursor (only for teacher)
                 if (this.myRole === 'teacher' && message.userId !== this.myId) {
                     this.showRemoteCursor(message);
                 }
                 break;
                 
             case 'highlight_selection':
-                // LEGACY: Εμφάνιση highlight επιλογής (ΜΟΝΟ για students)
+                // LEGACY: Show highlight selection (ONLY for students)
                 if (this.myRole === 'student' && message.userId !== this.myId) {
                     this.showRemoteHighlight(message);
                 }
                 break;
                 
             case 'highlight_tiles':
-                // ΝΕΟ: Εμφάνιση tile-based highlight (ΜΟΝΟ για students)
+                // NEW: Show tile-based highlight (ONLY for students)
                 if (this.myRole === 'student' && message.userId !== this.myId) {
                     this.showRemoteHighlightTiles(message);
                 }
@@ -510,6 +554,27 @@ const Collaboration = {
                 }
                 break;
             
+            case 'markdown_content':
+                // Teacher loaded a Markdown file
+                if (message.userId !== this.myId) {
+                    this.handleMarkdownContent(message);
+                }
+                break;
+            
+            case 'markdown_state':
+                // Teacher synced Markdown state
+                if (message.userId !== this.myId) {
+                    this.handleMarkdownState(message);
+                }
+                break;
+            
+            case 'markdown_laser':
+                // Teacher's laser on Markdown
+                if (message.userId !== this.myId) {
+                    this.handleMarkdownLaser(message);
+                }
+                break;
+            
             case 'hand_raise':
                 // Student raised/lowered hand (teacher receives)
                 this.handleHandRaise(message);
@@ -545,7 +610,23 @@ const Collaboration = {
                 if (this.myRole === 'student') {
                     console.log(`🌐 Teacher changed language to: ${message.language}`);
                     this.syncLanguage(message.language);
-                    showToast(`🌐 Γλώσσα: ${message.language.toUpperCase()}`, 'info');
+                    showToast(`🌐 Language: ${message.language.toUpperCase()}`, 'info');
+                }
+                break;
+            
+            case 'folder_shared':
+                // Someone shared a file (all clients receive)
+                console.log(`📂 File shared: ${message.folder?.name}`);
+                if (typeof SharedFilesBrowser !== 'undefined' && SharedFilesBrowser.onFolderShared) {
+                    SharedFilesBrowser.onFolderShared(message.folder);
+                }
+                break;
+            
+            case 'file_deleted':
+                // A shared file was deleted (all clients receive)
+                console.log(`🗑️ File deleted: ${message.fileName}`);
+                if (typeof SharedFilesBrowser !== 'undefined' && SharedFilesBrowser.onFileDeleted) {
+                    SharedFilesBrowser.onFileDeleted(message.fileName);
                 }
                 break;
                 
@@ -603,7 +684,7 @@ const Collaboration = {
             // Build tooltip with names
             if (count > 0) {
                 const names = Array.from(this.raisedHands.values()).join(', ');
-                container.title = `Σηκωμένα χέρια: ${names}`;
+                container.title = `Raised hands: ${names}`;
             }
         }
     },
@@ -699,8 +780,9 @@ const Collaboration = {
             languageSelector.value = language;
         }
         
-        // Set language via LanguageManager
-        LanguageManager.setLanguage(language).then(() => {
+        // Set language via LanguageManager with isRemoteSync flag
+        // This prevents main.js from overwriting the editor with initialCode
+        LanguageManager.setLanguage(language, { isRemoteSync: true }).then(() => {
             // Re-render editor to apply new syntax highlighting
             if (typeof gridEditor !== 'undefined' && gridEditor) {
                 gridEditor.render();
@@ -745,8 +827,8 @@ const Collaboration = {
                 overlay.innerHTML = `
                     <div class="focus-mode-content">
                         <span class="focus-icon">👁️</span>
-                        <span class="focus-text">Λειτουργία Προσοχής</span>
-                        <span class="focus-hint">Ο καθηγητής παρουσιάζει - παρακαλώ προσέξτε</span>
+                        <span class="focus-text">Focus Mode</span>
+                        <span class="focus-hint">Teacher is presenting - please pay attention</span>
                     </div>
                 `;
                 document.body.appendChild(overlay);
@@ -793,7 +875,7 @@ const Collaboration = {
             
             // Show toast notification to student
             if (typeof showToast === 'function') {
-                showToast(`📍 Ο καθηγητής σας πηγαίνει στη γραμμή ${lineNumber}`, 'info');
+                showToast(`📍 Teacher scrolled to line ${lineNumber}`, 'info');
             }
         }
     },
@@ -837,7 +919,7 @@ const Collaboration = {
     },
     
     /**
-     * Αποστολή αλλαγής κώδικα στον server
+     * Send code change to server
      */
     sendCodeUpdate(code) {
         if (this.connected && this.ws.readyState === WebSocket.OPEN) {
@@ -859,7 +941,7 @@ const Collaboration = {
     },
     
     /**
-     * Αποστολή φόρτωσης template
+     * Send template loaded notification
      */
     sendTemplateLoaded(code, templateName) {
         if (this.connected && this.ws.readyState === WebSocket.OPEN) {
@@ -872,10 +954,10 @@ const Collaboration = {
     },
     
     /**
-     * Ενημέρωση του editor με νέο περιεχόμενο
-     * Υποστηρίζει και GridEditor και legacy textarea
-     * @param {string} code - Ο νέος κώδικας
-     * @param {boolean} saveUndo - Αν θα αποθηκευτεί στο undo stack (default: true)
+     * Update editor with new content
+     * Supports both GridEditor and legacy textarea
+     * @param {string} code - The new code
+     * @param {boolean} saveUndo - Whether to save to undo stack (default: true)
      */
     updateEditorContent(code, saveUndo = true) {
 
@@ -886,8 +968,8 @@ const Collaboration = {
         if (typeof gridEditor !== 'undefined' && gridEditor) {
             // Use skipNotify to prevent feedback loop
             // Use preserveCursor to keep student's cursor position
-            // skipUndo: Οι remote αλλαγές ΠΡΕΠΕΙ να αποθηκεύονται στο undo stack
-            // ώστε το Ctrl+Z να λειτουργεί σωστά για όλους τους χρήστες
+            // skipUndo: Remote changes MUST be saved to undo stack
+            // so that Ctrl+Z works correctly for all users
             gridEditor.setValue(code, { skipNotify: true, preserveCursor: true, skipUndo: !saveUndo });
         } else {
             // Legacy textarea editor
@@ -896,11 +978,11 @@ const Collaboration = {
             
             editor.value = code;
             
-            // Προσπάθεια διατήρησης της θέσης του cursor
+            // Try to preserve cursor position
             editor.selectionStart = Math.min(cursorPos, code.length);
             editor.selectionEnd = Math.min(cursorPos, code.length);
             
-            // Trigger update για highlighting
+            // Trigger update for highlighting
             if (typeof updateEditor === 'function') {
                 updateEditor();
             }
@@ -910,13 +992,13 @@ const Collaboration = {
     },
     
     /**
-     * Ενημέρωση της κατάστασης σύνδεσης στο UI
+     * Update connection status in UI
      */
     updateConnectionStatus(connected) {
         let statusEl = document.getElementById('collab-status');
         
         if (!statusEl) {
-            // Δημιουργία status element αν δεν υπάρχει
+            // Create status element if it doesn't exist
             const footer = document.querySelector('.status-bar');
             if (footer) {
                 statusEl = document.createElement('div');
@@ -928,42 +1010,42 @@ const Collaboration = {
         
         if (statusEl) {
             if (connected) {
-                statusEl.innerHTML = `<span class="status-dot connected"></span> Συνδεδεμένος`;
+                statusEl.innerHTML = `<span class="status-dot connected"></span> Connected`;
                 statusEl.className = 'collab-status connected';
             } else {
-                statusEl.innerHTML = `<span class="status-dot disconnected"></span> Αποσυνδεδεμένος`;
+                statusEl.innerHTML = `<span class="status-dot disconnected"></span> Disconnected`;
                 statusEl.className = 'collab-status disconnected';
             }
         }
     },
     
     /**
-     * Καθαρισμός remote elements (highlight, cursor) - για νέα session
+     * Cleanup remote elements (highlight, cursor) - for new session
      */
     cleanupRemoteElements() {
-        // Αφαίρεση highlight container
+        // Remove highlight container
         const highlightContainer = document.getElementById('remote-highlight-container');
         if (highlightContainer) {
             highlightContainer.remove();
         }
         
-        // Απόκρυψη visual cursor
+        // Hide visual cursor
         const visualCursor = document.getElementById('visual-cursor');
         if (visualCursor) {
             visualCursor.style.display = 'none';
         }
         
-        console.log('🧹 Καθαρισμός remote elements');
+        console.log('🧹 Cleanup remote elements');
     },
     
     /**
-     * Ενημέρωση λίστας συνδεδεμένων χρηστών
+     * Update connected users list
      */
     updateUserList() {
         let userListEl = document.getElementById('user-list');
         
         if (!userListEl) {
-            // Δημιουργία user list element
+            // Create user list element
             const toolbar = document.querySelector('.toolbar-right');
             if (toolbar) {
                 userListEl = document.createElement('div');
@@ -976,7 +1058,7 @@ const Collaboration = {
         if (userListEl) {
             const users = this.connectedUsers.map(u => {
                 const icon = u.role === 'teacher' ? '👨‍🏫' : '👨‍🎓';
-                const isMe = u.id === this.myId ? ' (εσύ)' : '';
+                const isMe = u.id === this.myId ? ' (you)' : '';
                 return `<span class="user-badge ${u.role}" title="${u.name}">${icon}${isMe}</span>`;
             }).join('');
             
@@ -1003,7 +1085,7 @@ const Collaboration = {
         
         if (contentEl) {
             if (students.length === 0) {
-                contentEl.innerHTML = '<div class="no-students">Κανένας μαθητής συνδεδεμένος</div>';
+                contentEl.innerHTML = '<div class="no-students">No students connected</div>';
             } else {
                 contentEl.innerHTML = students.map(student => {
                     const initials = student.name.split(' ')
@@ -1023,7 +1105,7 @@ const Collaboration = {
     },
     
     /**
-     * Αποστολή θέσης cursor στον server (throttled - 100ms)
+     * Send cursor position to server (throttled - 100ms)
      */
     sendCursorUpdate(position, line, column) {
         if (this._throttledSendCursor) {
@@ -1046,13 +1128,13 @@ const Collaboration = {
     },
     
     /**
-     * Εμφάνιση cursor άλλου χρήστη (για teacher ΜΟΝΟ)
+     * Show another user's cursor (for teacher ONLY)
      */
     showRemoteCursor(data) {
         // Only teacher should see student's cursor
         if (this.myRole !== 'teacher') return;
         
-        // Αποθήκευση τελευταίας θέσης για scroll updates
+        // Store last position for scroll updates
         this.remoteCursors[data.userId] = {
             line: data.line,
             column: data.column
@@ -1065,7 +1147,7 @@ const Collaboration = {
             return;
         }
         
-        // Legacy: Εμφάνιση απλού visual cursor στον editor
+        // Legacy: Show simple visual cursor in editor
         const editor = document.getElementById('code-editor');
         if (!editor) return;
         
@@ -1073,14 +1155,14 @@ const Collaboration = {
     },
     
     /**
-     * Εμφάνιση απλού visual cursor στον editor
+     * Show simple visual cursor in editor
      */
     showVisualCursor(userId, line, column) {
         const codeArea = document.querySelector('.code-area');
         const editor = document.getElementById('code-editor');
         if (!codeArea || !editor) return;
         
-        // Βρες ή δημιούργησε το cursor element
+        // Find or create cursor element
         let cursorEl = document.getElementById(`visual-cursor-${userId}`);
         if (!cursorEl) {
             cursorEl = document.createElement('div');
@@ -1088,7 +1170,7 @@ const Collaboration = {
             cursorEl.className = 'visual-cursor';
             codeArea.appendChild(cursorEl);
             
-            // Ενημέρωση θέσης cursor όταν ο teacher κάνει scroll
+            // Update cursor position when teacher scrolls
             editor.addEventListener('scroll', () => {
                 const cursorData = this.remoteCursors[userId];
                 if (cursorData && cursorEl.style.display === 'block') {
@@ -1100,7 +1182,7 @@ const Collaboration = {
         this.updateCursorPosition(cursorEl, line, column);
         cursorEl.style.display = 'block';
         
-        // Απόκρυψη μετά από 5 δευτερόλεπτα αδράνειας
+        // Hide after 5 seconds of inactivity
         clearTimeout(cursorEl.hideTimeout);
         cursorEl.hideTimeout = setTimeout(() => {
             cursorEl.style.display = 'none';
@@ -1108,7 +1190,7 @@ const Collaboration = {
     },
     
     /**
-     * Ενημέρωση θέσης cursor element
+     * Update cursor element position
      */
     updateCursorPosition(cursorEl, line, column) {
         const editor = document.getElementById('code-editor');
@@ -1117,7 +1199,7 @@ const Collaboration = {
         const dims = this.getEditorDimensions(editor);
         const padding = 15; // Editor padding
         
-        // Υπολόγισε τη θέση βάσει row/column (1-based) + padding - scroll
+        // Calculate position based on row/column (1-based) + padding - scroll
         const top = padding + (line - 1) * dims.lineHeight - editor.scrollTop;
         const left = padding + (column - 1) * dims.charWidth - editor.scrollLeft;
         
@@ -1126,7 +1208,7 @@ const Collaboration = {
     },
     
     /**
-     * Υπολογισμός πλάτους χαρακτήρα στο editor (cached)
+     * Calculate character width in editor (cached)
      */
     _cachedCharWidth: null,
     _cachedLineHeight: null,
@@ -1139,24 +1221,24 @@ const Collaboration = {
         const computedStyle = getComputedStyle(editor);
         const currentFontSize = computedStyle.fontSize;
         
-        // Αν η γραμματοσειρά άλλαξε, επανυπολόγισε
+        // If font changed, recalculate
         if (this._cachedFontSize !== currentFontSize || !this._cachedCharWidth) {
             this._cachedFontSize = currentFontSize;
             
-            // Υπολογισμός line-height
+            // Calculate line-height
             let lineHeight = parseFloat(computedStyle.lineHeight);
             if (isNaN(lineHeight)) {
                 lineHeight = parseFloat(currentFontSize) * 1.5;
             }
             this._cachedLineHeight = lineHeight;
             
-            // Υπολογισμός character width μέσω hidden span
+            // Calculate character width via hidden span
             const testSpan = document.createElement('span');
             testSpan.style.font = computedStyle.font;
             testSpan.style.visibility = 'hidden';
             testSpan.style.position = 'absolute';
             testSpan.style.whiteSpace = 'pre';
-            testSpan.textContent = 'ΜΜΜΜΜΜΜΜΜΜ'; // 10 Greek chars for better accuracy
+            testSpan.textContent = 'MMMMMMMMMM'; // 10 chars for better accuracy
             document.body.appendChild(testSpan);
             this._cachedCharWidth = testSpan.offsetWidth / 10;
             document.body.removeChild(testSpan);
@@ -1179,7 +1261,7 @@ const Collaboration = {
     },
     
     /**
-     * Μετατροπή character index σε row/column
+     * Convert character index to row/column
      */
     indexToRowCol(text, index) {
         const lines = text.substring(0, index).split('\n');
@@ -1189,7 +1271,7 @@ const Collaboration = {
     },
     
     /**
-     * Μετατροπή row/column σε character index
+     * Convert row/column to character index
      */
     rowColToIndex(text, row, col) {
         const lines = text.split('\n');
@@ -1208,8 +1290,8 @@ const Collaboration = {
     // ============================================
     
     /**
-     * Αποστολή επιλογής κώδικα στον server (Teacher → Student)
-     * ΝΕΟΣ ΤΡΟΠΟΣ: Στέλνει Array<{row,col}> για exact tile highlighting
+     * Send code selection to server (Teacher → Student)
+     * NEW METHOD: Sends Array<{row,col}> for exact tile highlighting
      * Throttled to 100ms
      */
     sendHighlightTiles(tiles) {
@@ -1232,8 +1314,8 @@ const Collaboration = {
     },
     
     /**
-     * Αποστολή laser pointer position (Teacher - Ctrl+hover)
-     * Εμφανίζεται και στις δύο οθόνες (teacher + students)
+     * Send laser pointer position (Teacher - Ctrl+hover)
+     * Shown on both screens (teacher + students)
      * Throttled to 50ms
      */
     sendLaserPoint(position) {
@@ -1338,7 +1420,7 @@ const Collaboration = {
         // Load PDF in viewer
         if (typeof PdfViewer !== 'undefined') {
             PdfViewer.loadPdf(data.pdfData, true).then(() => {
-                showToast(`📄 ${data.userName} φόρτωσε: ${data.fileName}`, 'info');
+                showToast(`📄 ${data.userName} loaded: ${data.fileName}`, 'info');
             });
         }
     },
@@ -1376,9 +1458,98 @@ const Collaboration = {
         }
     },
     
+    // ============================================
+    // MARKDOWN SHARING METHODS
+    // ============================================
+    
     /**
-     * LEGACY: Αποστολή επιλογής κώδικα στον server (Teacher → Student)
-     * Στέλνει row/column για ακριβή αναπαραγωγή
+     * Send Markdown content to students (Teacher only)
+     */
+    sendMarkdownContent(content, fileName) {
+        if (this.connected && this.ws.readyState === WebSocket.OPEN) {
+            this._send(JSON.stringify({
+                type: 'markdown_content',
+                content: content,
+                fileName: fileName
+            }));
+        }
+    },
+    
+    /**
+     * Send Markdown state (scroll, zoom) - Teacher only
+     */
+    sendMarkdownState(state) {
+        if (this.connected && this.ws.readyState === WebSocket.OPEN) {
+            this._send(JSON.stringify({
+                type: 'markdown_state',
+                scrollTop: state.scrollTop,
+                scrollHeight: state.scrollHeight,
+                scale: state.scale
+            }));
+        }
+    },
+    
+    /**
+     * Handle Markdown content from teacher (Student)
+     */
+    handleMarkdownContent(data) {
+        console.log('📝 Receiving Markdown from teacher:', data.fileName);
+        
+        // Switch to Markdown mode if not already
+        if (window.LayoutManager) {
+            window.LayoutManager.switchToMode('markdown');
+        }
+        
+        // Load Markdown in viewer
+        if (typeof MarkdownViewer !== 'undefined') {
+            MarkdownViewer.loadMarkdown(data.content, false, data.fileName).then(() => {
+                showToast(`📝 ${data.userName || 'Teacher'} shared: ${data.fileName}`, 'info');
+            });
+        }
+    },
+    
+    /**
+     * Handle Markdown state from teacher (Student)
+     */
+    handleMarkdownState(data) {
+        if (typeof MarkdownViewer !== 'undefined' && MarkdownViewer.isActive) {
+            MarkdownViewer.applyState({
+                scrollTop: data.scrollTop,
+                scrollHeight: data.scrollHeight,
+                scale: data.scale
+            });
+        }
+    },
+    
+    /**
+     * Send Markdown laser pointer position - Teacher only
+     * @param {number} x - X position as percentage (0-1)
+     * @param {number} y - Y position as percentage (0-1)
+     * @param {boolean} active - Whether laser is active
+     */
+    sendMarkdownLaser(x, y, active) {
+        if (this.connected && this.ws.readyState === WebSocket.OPEN) {
+            this._send(JSON.stringify({
+                type: 'markdown_laser',
+                x: x,
+                y: y,
+                active: active
+            }));
+        }
+    },
+    
+    /**
+     * Handle Markdown laser from teacher (Student)
+     */
+    handleMarkdownLaser(data) {
+        if (typeof MarkdownViewer !== 'undefined' && MarkdownViewer.isActive) {
+            MarkdownViewer.showLaser(data.x, data.y, data.active);
+        }
+    },
+    
+    /**
+     * LEGACY: Send code selection to server (Teacher → Student)
+     * Sends row/column for accurate reproduction
      * @deprecated Use sendHighlightTiles instead
      */
     sendHighlightSelection(startRow, startCol, endRow, endCol, text) {
@@ -1398,15 +1569,15 @@ const Collaboration = {
     },
     
     /**
-     * ΝΕΟ: Εμφάνιση remote highlight tiles (από teacher) σε GridEditor
-     * ΜΟΝΟ για students
+     * NEW: Show remote highlight tiles (from teacher) in GridEditor
+     * ONLY for students
      */
     showRemoteHighlightTiles(data) {
         if (this.myRole === 'teacher') {
             return;
         }
         
-        // Αν υπάρχει GridEditor, χρησιμοποίησέ τον
+        // If GridEditor exists, use it
         if (typeof gridEditor !== 'undefined' && gridEditor) {
             if (data.active && data.tiles && data.tiles.length > 0) {
                 gridEditor.setRemoteHighlights(data.tiles);
@@ -1416,16 +1587,16 @@ const Collaboration = {
             return;
         }
         
-        // Fallback για legacy editor
+        // Fallback for legacy editor
         this.showRemoteHighlight(data);
     },
     
     /**
-     * Εμφάνιση remote laser pointer (από teacher)
-     * Εμφανίζεται σε ΟΛΑ τα screens (teacher + students)
+     * Show remote laser pointer (from teacher)
+     * Displayed on ALL screens (teacher + students)
      */
     showRemoteLaserPoint(data) {
-        // Αν υπάρχει GridEditor, χρησιμοποίησέ τον
+        // If GridEditor exists, use it
         if (typeof gridEditor !== 'undefined' && gridEditor) {
             if (data.active && data.row !== null && data.col !== null) {
                 gridEditor.setRemoteLaserPoint(data.row, data.col);
@@ -1436,12 +1607,12 @@ const Collaboration = {
     },
     
     /**
-     * LEGACY: Εμφάνιση remote highlight (από teacher)
-     * Δημιουργεί visual highlight overlay (όχι selection)
-     * ΜΟΝΟ για students - ο teacher δεν θα έπρεπε να καλέσει αυτή τη function
+     * LEGACY: Show remote highlight (from teacher)
+     * Creates visual highlight overlay (not selection)
+     * ONLY for students - teacher should not call this function
      */
     showRemoteHighlight(data) {
-        // Μόνο students βλέπουν highlights
+        // Only students see highlights
         if (this.myRole === 'teacher') return;
         
 
@@ -1449,7 +1620,7 @@ const Collaboration = {
         const highlightedCode = document.getElementById('highlighted-code');
         if (!editor || !highlightedCode) return;
         
-        // Βρες ή δημιούργησε το highlight container μέσα στο highlighted-code
+        // Find or create the highlight container inside highlighted-code
         let highlightContainer = document.getElementById('remote-highlight-container');
         if (!highlightContainer) {
             highlightContainer = document.createElement('div');
@@ -1458,17 +1629,17 @@ const Collaboration = {
             highlightedCode.appendChild(highlightContainer);
         }
         
-        // Καθάρισε παλιά highlights
+        // Clear old highlights
         highlightContainer.innerHTML = '';
         
         if (!data.active) {
             return;
         }
         
-        // Υπολογισμός διαστάσεων
+        // Calculate dimensions
         const dims = this.getEditorDimensions(editor);
         
-        // Για κάθε γραμμή που καλύπτει η επιλογή
+        // For each line covered by the selection
         const lines = editor.value.split('\n');
         for (let row = data.startRow; row <= data.endRow; row++) {
             if (row > lines.length || row < 1) continue;
@@ -1477,19 +1648,19 @@ const Collaboration = {
             let startCol, endCol;
             
             if (row === data.startRow && row === data.endRow) {
-                // Μία γραμμή
+                // Single line
                 startCol = data.startCol;
                 endCol = data.endCol;
             } else if (row === data.startRow) {
-                // Πρώτη γραμμή
+                // First line
                 startCol = data.startCol;
                 endCol = lineText.length + 1;
             } else if (row === data.endRow) {
-                // Τελευταία γραμμή
+                // Last line
                 startCol = 1;
                 endCol = data.endCol;
             } else {
-                // Ενδιάμεση γραμμή
+                // Middle line
                 startCol = 1;
                 endCol = lineText.length + 1;
             }
@@ -1497,10 +1668,10 @@ const Collaboration = {
             // Minimum width
             if (endCol <= startCol) continue;
             
-            // Δημιούργησε highlight element για αυτή τη γραμμή
+            // Create highlight element for this line
             const highlightEl = document.createElement('div');
             
-            // Θέσεις σχετικά με το content (το highlighted-code κάνει sync scroll)
+            // Positions relative to content (highlighted-code syncs scroll)
             const top = (row - 1) * dims.lineHeight;
             const left = (startCol - 1) * dims.charWidth;
             const width = (endCol - startCol) * dims.charWidth;
@@ -1521,7 +1692,7 @@ const Collaboration = {
     },
     
     /**
-     * Εμφάνιση ένδειξης ότι κάποιος άλλος επεξεργάζεται
+     * Show indicator that someone else is editing
      */
     showRemoteEdit(userName) {
         let indicator = document.getElementById('remote-edit-indicator');
@@ -1533,10 +1704,10 @@ const Collaboration = {
             document.querySelector('.editor-wrapper').appendChild(indicator);
         }
         
-        indicator.textContent = `✏️ ${userName} γράφει...`;
+        indicator.textContent = `✏️ ${userName} is typing...`;
         indicator.classList.add('visible');
         
-        // Κρύψε μετά από 1.5 δευτερόλεπτα
+        // Hide after 1.5 seconds
         clearTimeout(this.editIndicatorTimeout);
         this.editIndicatorTimeout = setTimeout(() => {
             indicator.classList.remove('visible');
@@ -1544,7 +1715,7 @@ const Collaboration = {
     }
 };
 
-// Debounce function για να μην στέλνουμε updates σε κάθε keystroke
+// Debounce function to avoid sending updates on every keystroke
 function debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {
@@ -1557,22 +1728,22 @@ function debounce(func, wait) {
     };
 }
 
-// Δημιουργία debounced version της sendCodeUpdate
+// Create debounced version of sendCodeUpdate
 const debouncedSendCode = debounce((code) => {
     Collaboration.sendCodeUpdate(code);
 }, 150); // 150ms delay
 
-// Αρχικοποίηση όταν φορτώσει η σελίδα
+// Initialize when page loads
 document.addEventListener('DOMContentLoaded', () => {
-    // Αρχικοποίηση collaboration μόνο αν δεν είμαστε σε απλή λειτουργία
+    // Initialize collaboration only if not in simple mode
     const urlParams = new URLSearchParams(window.location.search);
     
-    // Περίμενε λίγο για να φορτώσει το app.js και το GridEditor
+    // Wait a bit for app.js and GridEditor to load
     setTimeout(() => {
         Collaboration.init();
         
-        // Αν χρησιμοποιείται GridEditor, τα events είναι ήδη ρυθμισμένα στο app.js
-        // Αλλιώς, hook στο legacy textarea editor
+        // If GridEditor is used, events are already set up in app.js
+        // Otherwise, hook into the legacy textarea editor
         if (typeof gridEditor === 'undefined' || !gridEditor) {
             const editor = document.getElementById('code-editor');
             if (editor) {
@@ -1582,7 +1753,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
                 
-                // Αποστολή cursor position (για students)
+                // Send cursor position (for students)
                 const sendCursorPosition = () => {
                     const pos = editor.selectionStart;
                     const text = editor.value.substring(0, pos);
@@ -1599,7 +1770,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 editor.addEventListener('keyup', debouncedCursorUpdate);
                 editor.addEventListener('select', debouncedCursorUpdate);
                 
-                // Αποστολή selection highlight (μόνο για teacher)
+                // Send selection highlight (only for teacher)
                 const sendSelectionHighlight = () => {
                     if (Collaboration.myRole !== 'teacher') return;
                     
@@ -1607,7 +1778,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const end = editor.selectionEnd;
                     
                     if (start !== end) {
-                        // Μετατροπή σε row/col
+                        // Convert to row/col
                         const startPos = Collaboration.indexToRowCol(editor.value, start);
                         const endPos = Collaboration.indexToRowCol(editor.value, end);
                         const selectedText = editor.value.substring(start, end);
@@ -1635,7 +1806,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 500);
 });
 
-// Keep-alive ping κάθε 30 δευτερόλεπτα
+// Keep-alive ping every 30 seconds
 setInterval(() => {
     if (Collaboration.connected && Collaboration.ws.readyState === WebSocket.OPEN) {
         Collaboration.ws.send(JSON.stringify({ type: 'ping' }));

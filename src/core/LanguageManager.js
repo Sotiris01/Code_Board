@@ -269,9 +269,11 @@ const LanguageManager = (function() {
         /**
          * Sets the current active language
          * @param {string} langCode - Language code to activate
+         * @param {Object} options - Optional settings
+         * @param {boolean} options.isRemoteSync - If true, this change came from remote sync (don't clear editor)
          * @returns {Promise} Resolves when language is active
          */
-        async setLanguage(langCode) {
+        async setLanguage(langCode, options = {}) {
             if (!registry[langCode]) {
                 throw new Error(`Unknown language: ${langCode}`);
             }
@@ -288,7 +290,8 @@ const LanguageManager = (function() {
             window.dispatchEvent(new CustomEvent('languageChanged', {
                 detail: { 
                     language: langCode,
-                    info: this.getCurrentLanguageInfo()
+                    info: this.getCurrentLanguageInfo(),
+                    isRemoteSync: options.isRemoteSync || false
                 }
             }));
 

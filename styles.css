@@ -59,6 +59,7 @@
     --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     --font-size-default: 18px;
     --line-height: 1.6;
+    --row-height: 29px; /* Shared row height for line numbers and grid editor */
     
     /* Transitions */
     --transition-fast: 0.15s ease;
@@ -371,6 +372,7 @@ body.light-theme .theme-icon::before {
     background-color: var(--bg-line-numbers);
     border-right: 1px solid var(--border-color);
     padding: 15px 0;
+    padding-bottom: 420px;  /* Match editor bottom padding for scroll alignment */
     overflow: hidden;
     user-select: none;
     flex-shrink: 0;
@@ -379,11 +381,11 @@ body.light-theme .theme-icon::before {
 .line-number {
     font-family: var(--font-code);
     font-size: var(--font-size-default);
-    line-height: var(--line-height);
+    line-height: var(--row-height); /* Match grid-editor-row height exactly */
     color: var(--text-secondary);
     text-align: right;
     padding-right: 12px;
-    height: calc(var(--font-size-default) * var(--line-height));
+    height: var(--row-height); /* Match grid-editor-row height exactly */
     position: relative;
     transition: background-color 0.2s ease;
 }
@@ -1362,6 +1364,308 @@ body.is-teacher .activity-btn.teacher-only {
 }
 
 /* ============================================
+   SHARED FILES BROWSER
+   ============================================ */
+.shared-browser {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 10px;
+    gap: 12px;
+}
+
+.shared-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.shared-actions .btn-action {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    font-size: 0.85rem;
+    background-color: var(--accent-blue);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.shared-actions .btn-action:hover {
+    background-color: #4a90d9;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(86, 156, 214, 0.3);
+}
+
+.shared-actions .btn-icon {
+    font-size: 1.1rem;
+}
+
+/* Drop Zone */
+.drop-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 20px;
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    background-color: var(--bg-tertiary);
+    color: var(--text-secondary);
+    transition: all var(--transition-fast);
+}
+
+.drop-zone.drag-over {
+    border-color: var(--accent-blue);
+    background-color: rgba(86, 156, 214, 0.1);
+    color: var(--accent-blue);
+}
+
+.drop-zone .drop-icon {
+    font-size: 2rem;
+    opacity: 0.6;
+}
+
+.drop-zone .drop-text {
+    font-size: 0.85rem;
+}
+
+/* Upload Progress */
+.upload-progress {
+    padding: 12px;
+    background-color: var(--bg-tertiary);
+    border-radius: 6px;
+}
+
+.progress-bar {
+    height: 6px;
+    background-color: var(--bg-secondary);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
+    border-radius: 3px;
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+/* Shared Section */
+.shared-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    margin-bottom: 8px;
+}
+
+.section-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.section-count {
+    background-color: var(--accent-blue);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.shared-list {
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* Empty State */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 20px;
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.empty-state .empty-icon {
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+    opacity: 0.6;
+}
+
+.empty-state .empty-text {
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+}
+
+.empty-state .empty-hint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* Folder Item (in shared list) */
+.folder-item {
+    border-left: 3px solid var(--accent-yellow);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.folder-item .folder-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow: hidden;
+}
+
+.folder-item .folder-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+.folder-item .uploaded-by {
+    font-style: italic;
+    color: var(--accent-blue);
+}
+
+.folder-item .file-count {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+.folder-download-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.folder-download-btn:hover {
+    background-color: var(--accent-green);
+    border-color: var(--accent-green);
+}
+
+/* Own upload styling (no download button) */
+.folder-item.own-upload {
+    border-left-color: var(--text-muted);
+    opacity: 0.85;
+}
+
+.folder-item.own-upload .uploaded-by {
+    color: var(--accent-green);
+    font-style: italic;
+}
+
+/* Notification badge (red dot) */
+.notification-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 10px;
+    height: 10px;
+    background-color: #e74c3c;
+    border-radius: 50%;
+    border: 2px solid var(--bg-primary);
+    animation: pulse-badge 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-badge {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7);
+    }
+    50% {
+        transform: scale(1.1);
+        box-shadow: 0 0 0 4px rgba(231, 76, 60, 0);
+    }
+}
+
+/* Folder Navigation */
+.folder-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    background-color: var(--bg-tertiary);
+    border-radius: 6px;
+    border-left: 3px solid var(--accent-blue);
+}
+
+.nav-back-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: all var(--transition-fast);
+}
+
+.nav-back-btn:hover {
+    background-color: var(--accent-blue);
+    color: white;
+    border-color: var(--accent-blue);
+}
+
+.nav-path {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Shared File Item */
+.shared-file-item {
+    border-left: 3px solid var(--accent-green);
+}
+
+.shared-file-item .file-size {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    margin-left: auto;
+}
+
+/* ============================================
    COLLABORATION STYLES
    ============================================ */
 
@@ -1512,7 +1816,7 @@ body.is-teacher .activity-btn.teacher-only {
     
     /* CSS Custom Properties for dimensions (set by JS) */
     --char-width: 11px;
-    --char-height: 29px;
+    --char-height: var(--row-height, 29px); /* Use shared row height */
     --editor-font-size: var(--font-size-default);
 }
 
@@ -2082,6 +2386,221 @@ body.is-teacher .activity-btn.teacher-only {
 }
 
 /* ============================================
+   MARKDOWN VIEWER CONTAINER
+   ============================================ */
+.md-viewer-container {
+    flex: 1;
+    background: var(--bg-primary);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.md-scroll-wrapper {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    padding: 30px;
+    box-sizing: border-box;
+}
+
+.md-content {
+    max-width: 900px;
+    margin: 0 auto;
+    background: var(--bg-secondary);
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    color: var(--text-primary);
+    line-height: 1.7;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Markdown Typography */
+.md-content h1 {
+    color: var(--accent);
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 10px;
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+.md-content h2 {
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 8px;
+    margin-top: 30px;
+    margin-bottom: 15px;
+}
+
+.md-content h3, .md-content h4 {
+    color: var(--text-primary);
+    margin-top: 25px;
+    margin-bottom: 10px;
+}
+
+.md-content p {
+    margin-bottom: 15px;
+}
+
+.md-content a {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.md-content a:hover {
+    text-decoration: underline;
+}
+
+/* Code blocks */
+.md-content code {
+    background: var(--bg-tertiary);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: var(--font-code);
+    font-size: 0.9em;
+}
+
+.md-content pre {
+    background: var(--bg-tertiary);
+    padding: 15px;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin: 15px 0;
+}
+
+.md-content pre code {
+    background: none;
+    padding: 0;
+}
+
+/* Lists */
+.md-content ul, .md-content ol {
+    padding-left: 25px;
+    margin-bottom: 15px;
+}
+
+.md-content li {
+    margin-bottom: 5px;
+}
+
+/* Blockquotes */
+.md-content blockquote {
+    border-left: 4px solid var(--accent);
+    margin: 15px 0;
+    padding: 10px 20px;
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+/* Tables */
+.md-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+}
+
+.md-content th, .md-content td {
+    border: 1px solid var(--border-color);
+    padding: 10px;
+    text-align: left;
+}
+
+.md-content th {
+    background: var(--bg-tertiary);
+    font-weight: 600;
+}
+
+/* Horizontal rule */
+.md-content hr {
+    border: none;
+    border-top: 1px solid var(--border-color);
+    margin: 30px 0;
+}
+
+/* Images */
+.md-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 6px;
+    margin: 15px 0;
+}
+
+/* Empty state */
+.md-empty-state {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 60px 20px;
+    font-size: 1.2em;
+}
+
+/* ============================================
+   MARKDOWN LASER POINTER
+   ============================================ */
+.md-content-wrapper {
+    position: relative;
+}
+
+.md-laser-pointer {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: radial-gradient(circle, rgba(255, 0, 0, 1) 0%, rgba(255, 0, 0, 0.6) 40%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+    animation: md-laser-pulse 0.8s ease-in-out infinite;
+}
+
+@keyframes md-laser-pulse {
+    0%, 100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.3);
+        opacity: 0.7;
+    }
+}
+
+/* Student view - no scroll */
+.md-viewer-container.student-view .md-scroll-wrapper {
+    overflow: hidden;
+}
+
+/* Teacher view - scrollable, crosshair cursor */
+.md-viewer-container.teacher-view .md-scroll-wrapper {
+    overflow: auto;
+    cursor: crosshair;
+}
+
+/* ============================================
+   MARKDOWN CONTROLS
+   ============================================ */
+.md-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.md-scroll-controls,
+.md-zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.md-zoom-display {
+    min-width: 45px;
+    text-align: center;
+    font-family: var(--font-code);
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+/* ============================================
    STUDENT/TEACHER ONLY ELEMENTS
    ============================================ */
 
@@ -2425,5 +2944,137 @@ body.is-student .teacher-only {
     padding: 20px;
     color: var(--text-muted);
     font-size: 0.9rem;
+}
+
+/* ============================================
+   OPEN LOCAL FILE PANEL
+   ============================================ */
+.open-local-content {
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.panel-description {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.4;
+}
+
+.open-file-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: var(--accent-blue);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: background 0.2s, transform 0.1s;
+}
+
+.open-file-btn:hover {
+    background: #4a8fd4;
+    transform: translateY(-1px);
+}
+
+.open-file-btn:active {
+    transform: translateY(0);
+}
+
+.open-file-btn .btn-icon {
+    font-size: 1.2rem;
+}
+
+/* Drop Zone */
+.drop-zone {
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    padding: 25px 15px;
+    text-align: center;
+    transition: all 0.2s;
+    background: var(--bg-tertiary);
+}
+
+.drop-zone:hover,
+.drop-zone.drag-over {
+    border-color: var(--accent-blue);
+    background: rgba(86, 156, 214, 0.1);
+}
+
+.drop-zone-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.drop-icon {
+    font-size: 2rem;
+    opacity: 0.6;
+}
+
+.drop-text {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+/* File Info Card */
+.file-info {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.file-info-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.file-info-icon {
+    font-size: 1.5rem;
+}
+
+.file-info-name {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    word-break: break-all;
+}
+
+.file-info-meta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+}
+
+.file-info-meta .separator {
+    margin: 0 6px;
+}
+
+.load-file-btn {
+    width: 100%;
+    padding: 10px;
+    background: var(--accent-green);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.load-file-btn:hover {
+    background: #4caf50;
 }
 

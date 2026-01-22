@@ -1,6 +1,6 @@
 /**
  * Code Board - Collaborative Server
- * WebSocket server για real-time συνεργασία μεταξύ καθηγητή και μαθητή
+ * WebSocket server for real-time collaboration between teacher and students
  */
 
 const express = require('express');
@@ -8,6 +8,9 @@ const http = require('http');
 const WebSocket = require('ws');
 const path = require('path');
 const fs = require('fs');
+const multer = require('multer');
+const archiver = require('archiver');
+const iconv = require('iconv-lite');
 
 const app = express();
 const server = http.createServer(app);
@@ -15,6 +18,155 @@ const wss = new WebSocket.Server({ server });
 
 // Session file path for state persistence
 const SESSION_FILE = path.join(__dirname, '.session-state.json');
+
+// Unique session ID for this server run (isolates uploaded files)
+const UPLOAD_SESSION_ID = Date.now().toString();
+const UPLOADS_DIR = path.join(__dirname, 'uploads', UPLOAD_SESSION_ID);
+
+// Ensure uploads directory exists
+fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+console.log(`📁 Upload directory: uploads/${UPLOAD_SESSION_ID}/`);
+
+// Metadata file to store upload info (uploadedBy, timestamps, etc.)
+const UPLOADS_METADATA_FILE = path.join(UPLOADS_DIR, '.metadata.json');
+
+// Load or initialize uploads metadata
+function loadUploadsMetadata() {
+    try {
+        if (fs.existsSync(UPLOADS_METADATA_FILE)) {
+            return JSON.parse(fs.readFileSync(UPLOADS_METADATA_FILE, 'utf8'));
+        }
+    } catch (e) {
+        console.error('Error loading uploads metadata:', e);
+    }
+    return {};
+}
+
+// Save uploads metadata
+function saveUploadsMetadata(metadata) {
+    try {
+        fs.writeFileSync(UPLOADS_METADATA_FILE, JSON.stringify(metadata, null, 2), 'utf8');
+    } catch (e) {
+        console.error('Error saving uploads metadata:', e);
+    }
+}
+
+// In-memory uploads metadata (persisted to disk)
+let uploadsMetadata = loadUploadsMetadata();
+
+// Multer storage configuration - preserve folder structure
+// Helper function to decode filename from latin1 to UTF-8
+function decodeFilename(filename) {
+    try {
+        // Try to decode from latin1 (ISO-8859-1) to UTF-8
+        // This fixes filenames with Greek/special characters
+        return Buffer.from(filename, 'latin1').toString('utf8');
+    } catch (e) {
+        return filename;
+    }
+}
+
+/**
+ * Read file content with automatic encoding detection
+ * Supports UTF-8, UTF-16 LE/BE (with BOM), and Windows-1253 (Greek) for .glo files
+ * @param {string} filePath - Path to file
+ * @returns {string} File content as UTF-8 string
+ */
+function readFileWithEncoding(filePath) {
+    const buffer = fs.readFileSync(filePath);
+    const ext = path.extname(filePath).toLowerCase();
+    
+    // Check for UTF-16 BOM (Byte Order Mark)
+    // UTF-16 LE: FF FE
+    // UTF-16 BE: FE FF
+    if (buffer.length >= 2) {
+        if (buffer[0] === 0xFF && buffer[1] === 0xFE) {
+            console.log('📖 Decoded file with UTF-16 LE encoding:', filePath);
+            return buffer.toString('utf16le').replace(/^\uFEFF/, ''); // Remove BOM
+        }
+        if (buffer[0] === 0xFE && buffer[1] === 0xFF) {
+            // UTF-16 BE - need to swap bytes
+            const swapped = Buffer.alloc(buffer.length);
+            for (let i = 0; i < buffer.length - 1; i += 2) {
+                swapped[i] = buffer[i + 1];
+                swapped[i + 1] = buffer[i];
+            }
+            console.log('📖 Decoded file with UTF-16 BE encoding:', filePath);
+            return swapped.toString('utf16le').replace(/^\uFEFF/, ''); // Remove BOM
+        }
+    }
+    
+    // Check for UTF-8 BOM: EF BB BF
+    if (buffer.length >= 3 && buffer[0] === 0xEF && buffer[1] === 0xBB && buffer[2] === 0xBF) {
+        console.log('📖 Decoded file with UTF-8 BOM:', filePath);
+        return buffer.toString('utf8').replace(/^\uFEFF/, ''); // Remove BOM
+    }
+    
+    // Try UTF-8 first
+    let content = buffer.toString('utf8');
+    
+    // Check if content has replacement characters (indicates wrong encoding)
+    // Common sign: Greek text encoded as Windows-1253 shows as garbage in UTF-8
+    const hasReplacementChars = content.includes('\ufffd') || 
+        (ext === '.glo' && /[\x80-\xff]/.test(content) && !/[\u0370-\u03ff]/.test(content));
+    
+    if (hasReplacementChars || (ext === '.glo' && !isValidUtf8(buffer))) {
+        // Try Windows-1253 (Greek) encoding
+        try {
+            content = iconv.decode(buffer, 'windows-1253');
+            console.log('📖 Decoded file with Windows-1253 encoding:', filePath);
+        } catch (e) {
+            console.warn('⚠️ Failed to decode with Windows-1253, using UTF-8:', e.message);
+        }
+    }
+    
+    return content;
+}
+
+/**
+ * Check if buffer is valid UTF-8
+ * @param {Buffer} buffer 
+ * @returns {boolean}
+ */
+function isValidUtf8(buffer) {
+    try {
+        const str = buffer.toString('utf8');
+        // Check for replacement character which indicates invalid UTF-8
+        return !str.includes('\ufffd');
+    } catch (e) {
+        return false;
+    }
+}
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        // Decode the filename for proper UTF-8 handling
+        const decodedName = decodeFilename(file.originalname);
+        file.originalname = decodedName;
+        
+        // Get the relative path from webkitRelativePath (sent as separate field)
+        const relativePath = req.body[`path_${file.fieldname}_${decodedName}`] || 
+                            req.body[`path_${file.fieldname}_${file.originalname}`] || '';
+        const dirPath = path.dirname(relativePath);
+        const fullDir = path.join(UPLOADS_DIR, dirPath);
+        
+        // Create directory if it doesn't exist
+        fs.mkdirSync(fullDir, { recursive: true });
+        cb(null, fullDir);
+    },
+    filename: (req, file, cb) => {
+        // Use the decoded original filename
+        cb(null, file.originalname);
+    }
+});
+
+const upload = multer({
+    storage: storage,
+    limits: {
+        fileSize: 50 * 1024 * 1024, // 50MB max per file
+        files: 500 // Max 500 files per upload
+    }
+});
 
 // Debounce utility for saving state
 function debounce(func, wait) {
@@ -155,6 +307,375 @@ app.get('/api/auth-config', (req, res) => {
     });
 });
 
+// API endpoint for folder upload (multipart/form-data)
+app.post('/api/upload', upload.array('files', 500), (req, res) => {
+    try {
+        if (!req.files || req.files.length === 0) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'No files uploaded' 
+            });
+        }
+        
+        // Get uploader info from request body or query
+        const uploadedBy = req.body.uploadedBy || req.query.uploadedBy || 'Unknown';
+        
+        // Build list of uploaded files with their paths
+        const uploadedFiles = req.files.map(file => {
+            const relativePath = path.relative(UPLOADS_DIR, file.path);
+            return {
+                name: file.originalname,
+                path: relativePath,
+                size: file.size
+            };
+        });
+        
+        // Get folder name from first file's path
+        // If it's a single file (no folder structure), use the file name without extension
+        const firstPath = uploadedFiles[0]?.path || '';
+        const pathParts = firstPath.split(path.sep);
+        let folderName;
+        
+        if (pathParts.length > 1) {
+            // Has folder structure - use the top folder name
+            folderName = pathParts[0];
+        } else {
+            // Single file upload - the file IS the "folder" for display purposes
+            // Use the filename (with extension) as the folder name
+            folderName = firstPath || 'upload';
+        }
+        
+        console.log(`📤 Upload complete: ${req.files.length} files in folder "${folderName}" by ${uploadedBy}`);
+        
+        // Store metadata for this folder/file
+        uploadsMetadata[folderName] = {
+            uploadedBy: uploadedBy,
+            uploadedAt: new Date().toISOString(),
+            fileCount: req.files.length
+        };
+        saveUploadsMetadata(uploadsMetadata);
+        
+        // Broadcast to ALL connected clients (including sender) about new shared folder
+        broadcastAll({
+            type: 'folder_shared',
+            folder: {
+                name: folderName,
+                fileCount: req.files.length,
+                files: uploadedFiles,
+                uploadedBy: uploadedBy,
+                sharedAt: new Date().toISOString()
+            }
+        });
+        
+        res.json({
+            success: true,
+            message: `Uploaded ${req.files.length} files`,
+            folder: folderName,
+            fileCount: req.files.length,
+            files: uploadedFiles
+        });
+    } catch (error) {
+        console.error('❌ Upload error:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: error.message 
+        });
+    }
+});
+
+// API endpoint to list shared folders (and single files)
+app.get('/api/shared-folders', (req, res) => {
+    try {
+        if (!fs.existsSync(UPLOADS_DIR)) {
+            return res.json({ success: true, folders: [] });
+        }
+        
+        const items = fs.readdirSync(UPLOADS_DIR, { withFileTypes: true });
+        const folders = [];
+        
+        for (const item of items) {
+            // Skip metadata file
+            if (item.name === '.metadata.json') continue;
+            
+            // Get metadata for this item
+            const itemMeta = uploadsMetadata[item.name] || {};
+            
+            if (item.isDirectory()) {
+                // It's a folder - get all files recursively
+                const folderPath = path.join(UPLOADS_DIR, item.name);
+                const files = getFilesRecursively(folderPath, folderPath);
+                folders.push({
+                    name: item.name,
+                    fileCount: files.length,
+                    files: files,
+                    isFolder: true,
+                    uploadedBy: itemMeta.uploadedBy,
+                    uploadedAt: itemMeta.uploadedAt
+                });
+            } else {
+                // It's a single file - treat it as a "folder" with one file
+                const filePath = path.join(UPLOADS_DIR, item.name);
+                const stats = fs.statSync(filePath);
+                folders.push({
+                    name: item.name,
+                    fileCount: 1,
+                    files: [{
+                        name: item.name,
+                        path: item.name,
+                        size: stats.size
+                    }],
+                    isFolder: false,
+                    uploadedBy: itemMeta.uploadedBy,
+                    uploadedAt: itemMeta.uploadedAt
+                });
+            }
+        }
+        
+        res.json({ success: true, folders: folders });
+    } catch (error) {
+        res.json({ success: false, error: error.message });
+    }
+});
+
+// API endpoint to get uploaded file content or directory listing
+app.get('/api/uploads/files', (req, res) => {
+    try {
+        const requestedPath = req.query.path || '';
+        
+        // Security: Prevent path traversal attacks
+        const normalizedPath = path.normalize(requestedPath).replace(/^(\.\.(\/|\\|$))+/, '');
+        const fullPath = path.join(UPLOADS_DIR, normalizedPath);
+        
+        // Ensure the resolved path is within UPLOADS_DIR
+        if (!fullPath.startsWith(UPLOADS_DIR)) {
+            return res.status(403).json({ 
+                success: false, 
+                error: 'Access denied: Invalid path' 
+            });
+        }
+        
+        // Check if path exists
+        if (!fs.existsSync(fullPath)) {
+            return res.status(404).json({ 
+                success: false, 
+                error: 'File or directory not found' 
+            });
+        }
+        
+        const stats = fs.statSync(fullPath);
+        
+        if (stats.isDirectory()) {
+            // Return directory listing
+            const items = fs.readdirSync(fullPath, { withFileTypes: true });
+            const listing = items.map(item => ({
+                name: item.name,
+                isDirectory: item.isDirectory(),
+                path: path.join(normalizedPath, item.name).replace(/\\/g, '/'),
+                size: item.isFile() ? fs.statSync(path.join(fullPath, item.name)).size : null
+            }));
+            
+            res.json({ 
+                success: true, 
+                type: 'directory',
+                path: normalizedPath,
+                items: listing 
+            });
+        } else {
+            // Return file content
+            const ext = path.extname(fullPath).toLowerCase();
+            const textExtensions = ['.txt', '.md', '.gls', '.glo', '.py', '.cpp', '.java', '.js', '.html', '.css', '.json', '.xml', '.csv'];
+            
+            if (textExtensions.includes(ext)) {
+                // Text file - return content as string with encoding detection
+                const content = readFileWithEncoding(fullPath);
+                res.json({ 
+                    success: true, 
+                    type: 'file',
+                    path: normalizedPath,
+                    name: path.basename(fullPath),
+                    content: content,
+                    size: stats.size
+                });
+            } else if (ext === '.pdf') {
+                // PDF - return base64 or direct download
+                res.json({
+                    success: true,
+                    type: 'binary',
+                    path: normalizedPath,
+                    name: path.basename(fullPath),
+                    mimeType: 'application/pdf',
+                    downloadUrl: `/api/uploads/download?path=${encodeURIComponent(normalizedPath)}`
+                });
+            } else {
+                // Other binary files - offer download
+                res.json({
+                    success: true,
+                    type: 'binary',
+                    path: normalizedPath,
+                    name: path.basename(fullPath),
+                    size: stats.size,
+                    downloadUrl: `/api/uploads/download?path=${encodeURIComponent(normalizedPath)}`
+                });
+            }
+        }
+    } catch (error) {
+        console.error('Error serving uploaded file:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// API endpoint to download uploaded files
+app.get('/api/uploads/download', (req, res) => {
+    try {
+        const requestedPath = req.query.path || '';
+        
+        // Security: Prevent path traversal attacks
+        const normalizedPath = path.normalize(requestedPath).replace(/^(\.\.(\/|\\|$))+/, '');
+        const fullPath = path.join(UPLOADS_DIR, normalizedPath);
+        
+        // Ensure the resolved path is within UPLOADS_DIR
+        if (!fullPath.startsWith(UPLOADS_DIR)) {
+            return res.status(403).send('Access denied');
+        }
+        
+        if (!fs.existsSync(fullPath) || fs.statSync(fullPath).isDirectory()) {
+            return res.status(404).send('File not found');
+        }
+        
+        res.download(fullPath);
+    } catch (error) {
+        res.status(500).send('Download failed');
+    }
+});
+
+// API endpoint to download entire folder as ZIP (or single file)
+app.get('/api/download-folder', (req, res) => {
+    try {
+        const folderName = req.query.folderName || '';
+        
+        if (!folderName) {
+            return res.status(400).json({ success: false, error: 'Folder name required' });
+        }
+        
+        // Security: Prevent path traversal attacks
+        const normalizedName = path.normalize(folderName).replace(/^(\.\.(\\|\/|$))+/, '');
+        const fullPath = path.join(UPLOADS_DIR, normalizedName);
+        
+        // Ensure the resolved path is within UPLOADS_DIR
+        if (!fullPath.startsWith(UPLOADS_DIR)) {
+            return res.status(403).json({ success: false, error: 'Access denied' });
+        }
+        
+        if (!fs.existsSync(fullPath)) {
+            return res.status(404).json({ success: false, error: 'Folder not found' });
+        }
+        
+        const stats = fs.statSync(fullPath);
+        
+        // Check if it's a file (single file upload) or directory
+        if (stats.isFile()) {
+            // Single file - just download it directly
+            console.log(`📥 Single file download: ${normalizedName}`);
+            res.download(fullPath);
+            return;
+        }
+        
+        // It's a directory - create ZIP
+        // Set response headers for ZIP download
+        res.setHeader('Content-Type', 'application/zip');
+        res.setHeader('Content-Disposition', `attachment; filename="${normalizedName}.zip"`);
+        
+        // Create archive and pipe to response
+        const archive = archiver('zip', { zlib: { level: 9 } });
+        
+        archive.on('error', (err) => {
+            console.error('Archive error:', err);
+            res.status(500).end();
+        });
+        
+        archive.pipe(res);
+        
+        // Add the folder contents to the archive
+        archive.directory(fullPath, normalizedName);
+        
+        // Finalize the archive
+        archive.finalize();
+        
+        console.log(`📦 ZIP download: ${normalizedName}`);
+    } catch (error) {
+        console.error('ZIP download error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// API endpoint to delete a shared file/folder
+app.delete('/api/shared-files/:name', (req, res) => {
+    try {
+        const fileName = req.params.name;
+        
+        if (!fileName) {
+            return res.status(400).json({ success: false, error: 'File name required' });
+        }
+        
+        // Security: Prevent path traversal attacks
+        const normalizedName = path.normalize(fileName).replace(/^(\.\.(\\|\/|$))+/, '');
+        const fullPath = path.join(UPLOADS_DIR, normalizedName);
+        
+        // Ensure the resolved path is within UPLOADS_DIR
+        if (!fullPath.startsWith(UPLOADS_DIR)) {
+            return res.status(403).json({ success: false, error: 'Access denied' });
+        }
+        
+        if (!fs.existsSync(fullPath)) {
+            return res.status(404).json({ success: false, error: 'File not found' });
+        }
+        
+        const stats = fs.statSync(fullPath);
+        
+        if (stats.isDirectory()) {
+            // Delete directory recursively
+            fs.rmSync(fullPath, { recursive: true, force: true });
+        } else {
+            // Delete single file
+            fs.unlinkSync(fullPath);
+        }
+        
+        console.log(`🗑️ Deleted: ${normalizedName}`);
+        
+        // Broadcast deletion to all clients
+        broadcastAll({
+            type: 'file_deleted',
+            fileName: normalizedName
+        });
+        
+        res.json({ success: true, message: `Deleted: ${normalizedName}` });
+    } catch (error) {
+        console.error('Delete error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Helper: Get all files in a directory recursively
+function getFilesRecursively(dir, baseDir) {
+    const files = [];
+    const items = fs.readdirSync(dir, { withFileTypes: true });
+    
+    for (const item of items) {
+        const fullPath = path.join(dir, item.name);
+        if (item.isDirectory()) {
+            files.push(...getFilesRecursively(fullPath, baseDir));
+        } else {
+            files.push({
+                name: item.name,
+                path: path.relative(baseDir, fullPath),
+                size: fs.statSync(fullPath).size
+            });
+        }
+    }
+    
+    return files;
+}
+
 // Store current state
 let currentState = {
     code: '',
@@ -170,6 +691,10 @@ const TEACHER_PASSWORD = process.env.TEACHER_PASSWORD || null;
 // Connected clients
 const clients = new Map();
 let clientIdCounter = 0;
+
+// Known student identities for reconnection persistence
+// Maps stored studentId -> { name, lastSeen }
+const knownStudents = new Map();
 
 // Broadcast to all clients except sender
 function broadcast(message, excludeClient = null) {
@@ -192,28 +717,54 @@ function broadcastAll(message) {
 }
 
 wss.on('connection', (ws, req) => {
-    const clientId = ++clientIdCounter;
     const urlParams = new URLSearchParams(req.url.split('?')[1] || '');
     const isTeacher = urlParams.get('role') === 'teacher';
     const providedPassword = urlParams.get('password');
+    const providedStudentId = urlParams.get('studentId');
     
     // Validate teacher password if set
     if (isTeacher && TEACHER_PASSWORD) {
         if (providedPassword !== TEACHER_PASSWORD) {
-            console.log(`❌ Απόπειρα σύνδεσης teacher με λάθος κωδικό`);
+            console.log(`❌ Teacher connection attempt with wrong password`);
             ws.send(JSON.stringify({
                 type: 'auth_error',
-                message: 'Λάθος κωδικός πρόσβασης'
+                message: 'Wrong password'
             }));
             ws.close(4001, 'Invalid password');
             return;
         }
     }
     
+    // Determine client ID and name
+    let clientId;
+    let clientName;
+    
+    if (isTeacher) {
+        // Teacher always gets a new ID (only one teacher expected)
+        clientId = ++clientIdCounter;
+        clientName = 'Teacher';
+    } else {
+        // Student: check for reconnection with saved ID
+        if (providedStudentId && knownStudents.has(providedStudentId)) {
+            // Reconnecting student - reuse their identity
+            const knownStudent = knownStudents.get(providedStudentId);
+            clientId = providedStudentId;
+            clientName = knownStudent.name;
+            console.log(`🔄 Student reconnecting with saved ID: ${clientId} (${clientName})`);
+        } else {
+            // New student - assign new ID
+            clientId = ++clientIdCounter;
+            clientName = `Student ${clientId}`;
+            // Save to known students for future reconnection
+            knownStudents.set(String(clientId), { name: clientName, lastSeen: Date.now() });
+            console.log(`🆕 New student assigned ID: ${clientId} (${clientName})`);
+        }
+    }
+    
     const clientInfo = {
         id: clientId,
         role: isTeacher ? 'teacher' : 'student',
-        name: isTeacher ? 'Καθηγητής' : `Μαθητής ${clientId}`,
+        name: clientName,
         ws: ws
     };
     
@@ -224,7 +775,7 @@ wss.on('connection', (ws, req) => {
         name: clientInfo.name
     });
     
-    console.log(`✅ ${clientInfo.name} συνδέθηκε (${clientInfo.role})`);
+    console.log(`✅ ${clientInfo.name} connected (${clientInfo.role})`);
     if (isTeacher && TEACHER_PASSWORD) {
         console.log(`🔐 Teacher authenticated with password`);
     }
@@ -277,7 +828,7 @@ wss.on('connection', (ws, req) => {
                     break;
                     
                 case 'cursor_update':
-                    // Broadcast cursor position (μόνο στον teacher)
+                    // Broadcast cursor position (to teacher only)
                     wss.clients.forEach(targetWs => {
                         const targetClient = clients.get(targetWs);
                         if (targetWs !== ws && 
@@ -313,7 +864,7 @@ wss.on('connection', (ws, req) => {
                     break;
                     
                 case 'highlight_tiles':
-                    // ΝΕΟ: Broadcast tile-based highlights to all others
+                    // NEW: Broadcast tile-based highlights to all others
                     broadcast({
                         type: 'highlight_tiles',
                         userId: client.id,
@@ -372,11 +923,44 @@ wss.on('connection', (ws, req) => {
                     break;
                 
                 case 'mode_change':
-                    // Teacher changed mode (code/pdf)
+                    // Teacher changed mode (code/pdf/markdown)
                     broadcast({
                         type: 'mode_change',
                         userId: client.id,
                         mode: message.mode
+                    }, ws);
+                    break;
+                
+                case 'markdown_content':
+                    // Teacher loaded a Markdown file - broadcast to all students
+                    broadcast({
+                        type: 'markdown_content',
+                        userId: client.id,
+                        userName: client.name,
+                        content: message.content,
+                        fileName: message.fileName
+                    }, ws);
+                    break;
+                
+                case 'markdown_state':
+                    // Teacher syncs Markdown state (scroll, zoom)
+                    broadcast({
+                        type: 'markdown_state',
+                        userId: client.id,
+                        scrollTop: message.scrollTop,
+                        scrollHeight: message.scrollHeight,
+                        scale: message.scale
+                    }, ws);
+                    break;
+                
+                case 'markdown_laser':
+                    // Teacher's laser pointer on Markdown
+                    broadcast({
+                        type: 'markdown_laser',
+                        userId: client.id,
+                        x: message.x,
+                        y: message.y,
+                        active: message.active
                     }, ws);
                     break;
                     
@@ -406,7 +990,7 @@ wss.on('connection', (ws, req) => {
                 
                 case 'hand_raise':
                     // Student raised/lowered hand - notify teacher
-                    console.log(`${message.raised ? '✋' : '👇'} ${client.name} ${message.raised ? 'σήκωσε' : 'κατέβασε'} το χέρι`);
+                    console.log(`${message.raised ? '✋' : '👇'} ${client.name} ${message.raised ? 'raised' : 'lowered'} hand`);
                     wss.clients.forEach(targetWs => {
                         const targetClient = clients.get(targetWs);
                         if (targetWs.readyState === WebSocket.OPEN && 
@@ -423,7 +1007,7 @@ wss.on('connection', (ws, req) => {
                     
                 case 'reaction':
                     // Student sent a reaction - notify teacher
-                    console.log(`${message.emoji} ${client.name} αντέδρασε: ${message.reaction}`);
+                    console.log(`${message.emoji} ${client.name} reacted: ${message.reaction}`);
                     wss.clients.forEach(targetWs => {
                         const targetClient = clients.get(targetWs);
                         if (targetWs.readyState === WebSocket.OPEN && 
@@ -492,7 +1076,7 @@ wss.on('connection', (ws, req) => {
     ws.on('close', () => {
         const client = clients.get(ws);
         if (client) {
-            console.log(`❌ ${client.name} αποσυνδέθηκε`);
+            console.log(`❌ ${client.name} disconnected`);
             
             // Remove from connected users
             currentState.connectedUsers = currentState.connectedUsers.filter(u => u.id !== client.id);
@@ -556,7 +1140,7 @@ app.get('/api/files', (req, res) => {
         
         const items = fs.readdirSync(fullPath, { withFileTypes: true });
         const result = items
-            .filter(item => item.isDirectory() || item.name.endsWith('.gls') || item.name.endsWith('.py') || item.name.endsWith('.cpp') || item.name.endsWith('.h') || item.name.endsWith('.java'))
+            .filter(item => item.isDirectory() || item.name.endsWith('.gls') || item.name.endsWith('.glo') || item.name.endsWith('.py') || item.name.endsWith('.cpp') || item.name.endsWith('.h') || item.name.endsWith('.java') || item.name.endsWith('.md') || item.name.endsWith('.pdf'))
             .map(item => ({
                 name: item.name,
                 type: item.isDirectory() ? 'folder' : 'file',
@@ -601,8 +1185,8 @@ app.get('/api/files/content', (req, res) => {
         return res.status(403).json({ error: `Access denied: path outside content directory` });
     }
     
-    // Allow .gls, .py, .cpp, .h, .hpp, .java files
-    const allowedExtensions = ['.gls', '.py', '.cpp', '.h', '.hpp', '.c', '.java'];
+    // Allow .gls, .glo, .py, .cpp, .h, .hpp, .java, .md files
+    const allowedExtensions = ['.gls', '.glo', '.py', '.cpp', '.h', '.hpp', '.c', '.java', '.md'];
     const fileExt = path.extname(filePath).toLowerCase();
     if (!allowedExtensions.includes(fileExt)) {
         return res.status(400).json({ error: `File type not allowed: ${filePath}. Allowed: ${allowedExtensions.join(', ')}` });
@@ -614,7 +1198,7 @@ app.get('/api/files/content', (req, res) => {
             return res.status(404).json({ error: `File not found: ${filePath}` });
         }
         
-        const content = fs.readFileSync(fullPath, 'utf-8');
+        const content = readFileWithEncoding(fullPath);
         console.log('✅ Loaded file:', filePath);
         
         res.json({
@@ -640,13 +1224,12 @@ server.listen(PORT, () => {
     console.log('╠════════════════════════════════════════════════════════════╣');
     console.log(`║  🌐 Local:    http://localhost:${PORT}                        ║`);
     console.log('║                                                            ║');
-    console.log('║  📝 Για να μοιραστείς με τον μαθητή:                       ║');
-    console.log('║     Τρέξε: ngrok http 3000                                 ║');
-    console.log('║     Και στείλε το link που θα δημιουργηθεί:                ║');
-    console.log('║    https://terence-homophonic-arnulfo.ngrok-free.dev/ link ║');
+    console.log('║  📝 To share with students:                               ║');
+    console.log('║     Run: ngrok http 3000                                   ║');
+    console.log('║     Then share the generated link                          ║');
     console.log('║                                                            ║');
-    console.log('║  👨‍🏫 Καθηγητής: http://localhost:3000?role=teacher         ║');
-    console.log('║  👨‍🎓 Μαθητής:   Χρησιμοποιεί το ngrok link                 ║');
+    console.log('║  👨‍🏫 Teacher: http://localhost:3000?role=teacher         ║');
+    console.log('║  👨‍🎓 Student: Use the ngrok link                        ║');
     console.log('╚════════════════════════════════════════════════════════════╝');
     if (currentState.code) {
         console.log('📂 Previous session restored - code ready');

@@ -103,13 +103,13 @@ const Toolbar = {
                 : (this.legacyEditor?.value || '');
             
             await navigator.clipboard.writeText(code);
-            showToast('✅ Ο κώδικας αντιγράφηκε!', 'success');
+            showToast('✅ Code copied!', 'success');
         } catch (err) {
             // Fallback for older browsers
             if (this.legacyEditor) {
                 this.legacyEditor.select();
                 document.execCommand('copy');
-                showToast('✅ Ο κώδικας αντιγράφηκε!', 'success');
+                showToast('✅ Code copied!', 'success');
             }
         }
     },
@@ -123,11 +123,11 @@ const Toolbar = {
             : (this.legacyEditor?.value || '');
         
         if (currentCode.trim() === '') {
-            showToast('Ο πίνακας είναι ήδη κενός', 'info');
+            showToast('Board is already empty', 'info');
             return;
         }
         
-        if (confirm('Είσαι σίγουρος ότι θέλεις να καθαρίσεις τον πίνακα;')) {
+        if (confirm('Are you sure you want to clear the board?')) {
             if (this.gridEditor) {
                 this.gridEditor.setValue('');
             } else if (this.legacyEditor) {
@@ -137,10 +137,10 @@ const Toolbar = {
             
             // Sync with collaboration
             if (typeof Collaboration !== 'undefined' && Collaboration.connected) {
-                Collaboration.sendTemplateLoaded('', '🗑️ Καθαρισμός');
+                Collaboration.sendTemplateLoaded('', '🗑️ Clear');
             }
             
-            showToast('🗑️ Ο πίνακας καθαρίστηκε', 'info');
+            showToast('🗑️ Board cleared', 'info');
             
             // Focus editor
             if (this.gridEditor) {

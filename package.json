@@ -9,12 +9,20 @@
     "tunnel": "ngrok http 3000",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["education", "greek", "programming", "collaboration"],
+  "keywords": [
+    "education",
+    "greek",
+    "programming",
+    "collaboration"
+  ],
   "author": "Σωτήρης Μπαλατσιάς",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "archiver": "^7.0.1",
     "express": "^5.2.1",
+    "iconv-lite": "^0.7.2",
+    "multer": "^2.0.2",
     "ws": "^8.19.0"
   }
 }

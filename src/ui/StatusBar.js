@@ -98,10 +98,10 @@ const StatusBar = {
         
         // Update status bar counts
         if (this.elements.lineCount) {
-            this.elements.lineCount.textContent = `Γραμμές: ${lineCount}`;
+            this.elements.lineCount.textContent = `Lines: ${lineCount}`;
         }
         if (this.elements.charCount) {
-            this.elements.charCount.textContent = `Χαρακτήρες: ${charCount}`;
+            this.elements.charCount.textContent = `Characters: ${charCount}`;
         }
     },
     

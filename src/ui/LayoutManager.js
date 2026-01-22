@@ -1,9 +1,10 @@
 /**
  * LayoutManager Component
- * Handles sidebar resizing and mode switching (Code vs PDF)
+ * Handles sidebar resizing and mode switching (Code, PDF, Markdown)
  * 
  * Dependencies:
  * - PdfViewer
+ * - MarkdownViewer
  * - Collaboration (for sync)
  * - UIManager (for showToast)
  */
@@ -13,13 +14,16 @@ const LayoutManager = {
         // Mode toggle
         modeCode: null,
         modePdf: null,
+        modeMarkdown: null,
         // Containers
         gridEditorContainer: null,
         pdfViewerContainer: null,
+        mdViewerContainer: null,
         lineNumbers: null,
         // Controls
         pdfControls: null,
         codeControls: null,
+        mdControls: null,
         // PDF specific
         pdfFileInput: null,
         pdfPrev: null,
@@ -28,12 +32,19 @@ const LayoutManager = {
         pdfZoomIn: null,
         pdfZoomOut: null,
         pdfZoomDisplay: null,
+        // Markdown specific
+        mdFileInput: null,
+        mdScrollTop: null,
+        mdScrollBottom: null,
+        mdZoomIn: null,
+        mdZoomOut: null,
+        mdZoomDisplay: null,
         // Sidebar
         sidebarResizeHandle: null,
         keywordSidebar: null
     },
     
-    // Current mode: 'code' or 'pdf'
+    // Current mode: 'code', 'pdf', or 'markdown'
     currentMode: 'code',
     
     // Teacher mode flag
@@ -61,6 +72,7 @@ const LayoutManager = {
         // Initialize components
         this._initModeToggle();
         this._initPdfViewer();
+        this._initMarkdownViewer();
         this._initSidebarResizer();
         
         console.log('📐 LayoutManager initialized');
@@ -72,11 +84,14 @@ const LayoutManager = {
     _cacheElements() {
         this.elements.modeCode = document.getElementById('mode-code');
         this.elements.modePdf = document.getElementById('mode-pdf');
+        this.elements.modeMarkdown = document.getElementById('mode-markdown');
         this.elements.gridEditorContainer = document.getElementById('grid-editor-container');
         this.elements.pdfViewerContainer = document.getElementById('pdf-viewer-container');
+        this.elements.mdViewerContainer = document.getElementById('md-viewer-container');
         this.elements.lineNumbers = document.getElementById('line-numbers');
         this.elements.pdfControls = document.getElementById('pdf-controls');
         this.elements.codeControls = document.getElementById('code-controls');
+        this.elements.mdControls = document.getElementById('md-controls');
         this.elements.pdfFileInput = document.getElementById('pdf-file-input');
         this.elements.pdfPrev = document.getElementById('pdf-prev');
         this.elements.pdfNext = document.getElementById('pdf-next');
@@ -84,6 +99,12 @@ const LayoutManager = {
         this.elements.pdfZoomIn = document.getElementById('pdf-zoom-in');
         this.elements.pdfZoomOut = document.getElementById('pdf-zoom-out');
         this.elements.pdfZoomDisplay = document.getElementById('pdf-zoom-display');
+        this.elements.mdFileInput = document.getElementById('md-file-input');
+        this.elements.mdScrollTop = document.getElementById('md-scroll-top');
+        this.elements.mdScrollBottom = document.getElementById('md-scroll-bottom');
+        this.elements.mdZoomIn = document.getElementById('md-zoom-in');
+        this.elements.mdZoomOut = document.getElementById('md-zoom-out');
+        this.elements.mdZoomDisplay = document.getElementById('md-zoom-display');
         this.elements.sidebarResizeHandle = document.getElementById('sidebar-resize-handle');
         this.elements.keywordSidebar = document.getElementById('keyword-sidebar');
     },
@@ -106,6 +127,15 @@ const LayoutManager = {
                 this.switchToMode('pdf');
                 if (this.isTeacher && typeof Collaboration !== 'undefined') {
                     Collaboration.sendModeChange('pdf');
+                }
+            });
+        }
+        
+        if (this.elements.modeMarkdown) {
+            this.elements.modeMarkdown.addEventListener('click', () => {
+                this.switchToMode('markdown');
+                if (this.isTeacher && typeof Collaboration !== 'undefined') {
+                    Collaboration.sendModeChange('markdown');
                 }
             });
         }
@@ -138,7 +168,7 @@ const LayoutManager = {
                 this.elements.pdfFileInput.addEventListener('change', async (e) => {
                     const file = e.target.files[0];
                     if (file) {
-                        showToast('📄 Φόρτωση PDF...', 'info');
+                        showToast('📄 Loading PDF...', 'info');
                         
                         try {
                             const base64 = await PdfViewer.fileToBase64(file);
@@ -149,10 +179,10 @@ const LayoutManager = {
                             }
                             
                             this._updatePdfControls();
-                            showToast(`✅ Φορτώθηκε: ${file.name}`, 'success');
+                            showToast(`✅ Loaded: ${file.name}`, 'success');
                         } catch (err) {
                             console.error('Error loading PDF:', err);
-                            showToast('❌ Σφάλμα φόρτωσης PDF', 'error');
+                            showToast('❌ Error loading PDF', 'error');
                         }
                         
                         e.target.value = '';
@@ -170,6 +200,82 @@ const LayoutManager = {
             }
             
             console.log('📄 PDF Viewer ready');
+        }
+    },
+    
+    /**
+     * Initialize Markdown viewer and controls
+     */
+    _initMarkdownViewer() {
+        // Initialize MarkdownViewer component
+        if (typeof MarkdownViewer !== 'undefined') {
+            MarkdownViewer.init('md-viewer-container', this.isTeacher);
+            
+            // Set up container class based on role
+            const container = document.getElementById('md-viewer-container');
+            if (container) {
+                container.classList.add(this.isTeacher ? 'teacher-view' : 'student-view');
+            }
+            
+            // Teacher-only: Markdown file input
+            if (this.isTeacher && this.elements.mdFileInput) {
+                this.elements.mdFileInput.addEventListener('change', async (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        showToast('📝 Loading Markdown...', 'info');
+                        
+                        try {
+                            await MarkdownViewer.loadFromFile(file);
+                            showToast(`✅ Loaded: ${file.name}`, 'success');
+                        } catch (err) {
+                            console.error('Error loading Markdown:', err);
+                            showToast('❌ Error loading Markdown', 'error');
+                        }
+                        
+                        e.target.value = '';
+                    }
+                });
+            }
+            
+            // Teacher-only: Navigation and zoom controls
+            if (this.isTeacher) {
+                this._initMarkdownControls();
+            } else {
+                // Student: hide load button
+                const loadBtn = document.querySelector('.md-load-btn');
+                if (loadBtn) loadBtn.style.display = 'none';
+            }
+            
+            console.log('📝 Markdown Viewer ready');
+        }
+    },
+    
+    /**
+     * Initialize Markdown navigation controls (teacher only)
+     */
+    _initMarkdownControls() {
+        if (this.elements.mdScrollTop) {
+            this.elements.mdScrollTop.addEventListener('click', () => {
+                MarkdownViewer.scrollToTop();
+            });
+        }
+        
+        if (this.elements.mdScrollBottom) {
+            this.elements.mdScrollBottom.addEventListener('click', () => {
+                MarkdownViewer.scrollToBottom();
+            });
+        }
+        
+        if (this.elements.mdZoomIn) {
+            this.elements.mdZoomIn.addEventListener('click', () => {
+                MarkdownViewer.setZoom(MarkdownViewer.scale + 0.1);
+            });
+        }
+        
+        if (this.elements.mdZoomOut) {
+            this.elements.mdZoomOut.addEventListener('click', () => {
+                MarkdownViewer.setZoom(MarkdownViewer.scale - 0.1);
+            });
         }
     },
     
@@ -279,57 +385,58 @@ const LayoutManager = {
     },
     
     /**
-     * Switch between code and PDF mode
-     * @param {string} mode - 'code' or 'pdf'
+     * Switch between code, PDF, and markdown modes
+     * @param {string} mode - 'code', 'pdf', or 'markdown'
      */
     switchToMode(mode) {
         if (mode === this.currentMode) return;
         this.currentMode = mode;
         
+        // Reset all mode buttons
+        this.elements.modeCode?.classList.remove('active');
+        this.elements.modePdf?.classList.remove('active');
+        this.elements.modeMarkdown?.classList.remove('active');
+        
+        // Hide all containers and controls
+        if (this.elements.gridEditorContainer) this.elements.gridEditorContainer.style.display = 'none';
+        if (this.elements.pdfViewerContainer) this.elements.pdfViewerContainer.style.display = 'none';
+        if (this.elements.mdViewerContainer) this.elements.mdViewerContainer.style.display = 'none';
+        if (this.elements.lineNumbers) this.elements.lineNumbers.style.display = 'none';
+        if (this.elements.codeControls) this.elements.codeControls.style.display = 'none';
+        if (this.elements.pdfControls) this.elements.pdfControls.style.display = 'none';
+        if (this.elements.mdControls) this.elements.mdControls.style.display = 'none';
+        
+        // Deactivate all viewers
+        if (typeof PdfViewer !== 'undefined') PdfViewer.hide();
+        if (typeof MarkdownViewer !== 'undefined') MarkdownViewer.hide();
+        
         if (mode === 'pdf') {
             // Switch to PDF mode
-            this.elements.modeCode?.classList.remove('active');
             this.elements.modePdf?.classList.add('active');
-            
-            // Hide code elements
-            if (this.elements.gridEditorContainer) this.elements.gridEditorContainer.style.display = 'none';
-            if (this.elements.lineNumbers) this.elements.lineNumbers.style.display = 'none';
-            if (this.elements.codeControls) this.elements.codeControls.style.display = 'none';
-            
-            // Show PDF elements
             if (this.elements.pdfViewerContainer) this.elements.pdfViewerContainer.style.display = 'block';
             if (this.elements.pdfControls) this.elements.pdfControls.style.display = 'flex';
-            
-            // Activate PDF viewer
-            if (typeof PdfViewer !== 'undefined') {
-                PdfViewer.show();
-            }
-            
+            if (typeof PdfViewer !== 'undefined') PdfViewer.show();
             console.log('📄 Switched to PDF mode');
+            
+        } else if (mode === 'markdown') {
+            // Switch to Markdown mode
+            this.elements.modeMarkdown?.classList.add('active');
+            if (this.elements.mdViewerContainer) this.elements.mdViewerContainer.style.display = 'flex';
+            if (this.elements.mdControls) this.elements.mdControls.style.display = 'flex';
+            if (typeof MarkdownViewer !== 'undefined') MarkdownViewer.show();
+            console.log('📝 Switched to Markdown mode');
+            
         } else {
-            // Switch to code mode
-            this.elements.modePdf?.classList.remove('active');
+            // Switch to code mode (default)
             this.elements.modeCode?.classList.add('active');
-            
-            // Hide PDF elements
-            if (this.elements.pdfViewerContainer) this.elements.pdfViewerContainer.style.display = 'none';
-            if (this.elements.pdfControls) this.elements.pdfControls.style.display = 'none';
-            
-            // Show code elements
             if (this.elements.gridEditorContainer) this.elements.gridEditorContainer.style.display = 'block';
             if (this.elements.lineNumbers) this.elements.lineNumbers.style.display = 'block';
             if (this.elements.codeControls) this.elements.codeControls.style.display = 'flex';
-            
-            // Deactivate PDF viewer
-            if (typeof PdfViewer !== 'undefined') {
-                PdfViewer.hide();
-            }
             
             // Focus editor
             if (this.gridEditor) {
                 this.gridEditor.focus();
             }
-            
             console.log('💻 Switched to Code mode');
         }
     },

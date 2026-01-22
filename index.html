@@ -5,14 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Code Board - Code Teaching Board</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="styles.css?v=39">
+    <link rel="stylesheet" href="styles.css?v=41">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Markdown Parser (marked.js) -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
     <!-- PDF.js Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>
         // Configure PDF.js worker
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     </script>
+    <!-- JSZip Library for client-side ZIP creation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
     <div class="app-container">
@@ -30,6 +35,10 @@
                     <button id="mode-pdf" class="btn btn-mode" title="PDF Viewer">
                         <span class="btn-icon">📄</span>
                         <span class="btn-text">PDF</span>
+                    </button>
+                    <button id="mode-markdown" class="btn btn-mode" title="Markdown Viewer">
+                        <span class="btn-icon">📝</span>
+                        <span class="btn-text">MD</span>
                     </button>
                 </div>
                 
@@ -79,6 +88,32 @@
                         <span class="btn-icon">👁️</span>
                     </button>
                 </div>
+                
+                <!-- Markdown Controls (hidden by default) -->
+                <div class="md-controls" id="md-controls" style="display: none;">
+                    <label class="btn btn-tool md-load-btn teacher-only" title="Load Markdown (Teacher only)">
+                        <span class="btn-icon">📂</span>
+                        <span class="btn-text">Open MD</span>
+                        <input type="file" id="md-file-input" accept=".md,.txt" style="display: none;">
+                    </label>
+                    <div class="md-scroll-controls">
+                        <button id="md-scroll-top" class="btn btn-tool" title="Scroll to Top">
+                            <span class="btn-icon">⬆️</span>
+                        </button>
+                        <button id="md-scroll-bottom" class="btn btn-tool" title="Scroll to Bottom">
+                            <span class="btn-icon">⬇️</span>
+                        </button>
+                    </div>
+                    <div class="md-zoom-controls">
+                        <button id="md-zoom-out" class="btn btn-tool" title="Zoom Out">
+                            <span class="btn-icon">➖</span>
+                        </button>
+                        <span id="md-zoom-display" class="md-zoom-display">100%</span>
+                        <button id="md-zoom-in" class="btn btn-tool" title="Zoom In">
+                            <span class="btn-icon">➕</span>
+                        </button>
+                    </div>
+                </div>
             </div>
             <div class="toolbar-right">
                 <!-- Theme Toggle -->
@@ -121,6 +156,11 @@
                     <!-- PDF will be rendered here by pdf-viewer.js -->
                 </div>
                 
+                <!-- Markdown Viewer Container -->
+                <div id="md-viewer-container" class="md-viewer-container" style="display: none;">
+                    <!-- Markdown will be rendered here by MarkdownViewer.js -->
+                </div>
+                
                 <!-- Hidden textarea for backwards compatibility (fallback) -->
                 <textarea 
                     id="code-editor" 
@@ -137,14 +177,20 @@
             <aside class="sidebar-container" id="sidebar-container">
                 <!-- Activity Bar (Vertical Icon Strip) -->
                 <div class="activity-bar" id="activity-bar">
-                    <button class="activity-btn active" data-panel="keywords" title="Λέξεις-Κλειδιά (Ctrl+1)">
+                    <button class="activity-btn active" data-panel="keywords" title="Keywords (Ctrl+1)">
                         <span class="activity-icon">⌨️</span>
                     </button>
-                    <button class="activity-btn teacher-only" data-panel="files" title="Αρχεία (Ctrl+2)">
+                    <button class="activity-btn teacher-only" data-panel="files" title="Files (Ctrl+2)">
                         <span class="activity-icon">📁</span>
                     </button>
+                    <button class="activity-btn" data-panel="shared" title="Shared Files (Ctrl+3)">
+                        <span class="activity-icon">📤</span>
+                    </button>
+                    <button class="activity-btn teacher-only" data-panel="open-local" title="Open Local File (Ctrl+4)">
+                        <span class="activity-icon">💻</span>
+                    </button>
                     <div class="activity-spacer"></div>
-                    <button class="activity-btn" data-action="toggle-sidebar" title="Εμφάνιση/Απόκρυψη πλαϊνής μπάρας">
+                    <button class="activity-btn" data-action="toggle-sidebar" title="Show/Hide sidebar">
                         <span class="activity-icon">◀</span>
                     </button>
                 </div>
@@ -174,6 +220,57 @@
                             <!-- File List -->
                             <div class="file-list" id="file-list">
                                 <!-- Files will be loaded here dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Shared Files Panel -->
+                    <div class="sidebar-panel" id="shared-panel">
+                        <div class="panel-header">
+                            <span class="panel-title">SHARED FILES</span>
+                        </div>
+                        <div class="shared-content" id="shared-content">
+                            <!-- Shared files content will be generated by SharedFilesBrowser.js -->
+                        </div>
+                    </div>
+                    
+                    <!-- Open Local File Panel (Teacher Only) -->
+                    <div class="sidebar-panel" id="open-local-panel">
+                        <div class="panel-header">
+                            <span class="panel-title">OPEN LOCAL FILE</span>
+                        </div>
+                        <div class="open-local-content" id="open-local-content">
+                            <p class="panel-description">Open a program file from your computer and load it onto the board.</p>
+                            
+                            <!-- File Picker Button -->
+                            <button class="open-file-btn" id="open-local-file-btn">
+                                <span class="btn-icon">📂</span>
+                                <span class="btn-text">Browse Files...</span>
+                            </button>
+                            <input type="file" id="local-file-input" accept=".gls,.glo,.py,.cpp,.c,.h,.hpp,.java,.txt" style="display: none;">
+                            
+                            <!-- Drag & Drop Zone -->
+                            <div class="drop-zone" id="local-drop-zone">
+                                <div class="drop-zone-content">
+                                    <span class="drop-icon">📄</span>
+                                    <span class="drop-text">Drop file here</span>
+                                </div>
+                            </div>
+                            
+                            <!-- File Info (shown after selection) -->
+                            <div class="file-info" id="local-file-info" style="display: none;">
+                                <div class="file-info-header">
+                                    <span class="file-info-icon">📄</span>
+                                    <span class="file-info-name" id="local-file-name">filename.gls</span>
+                                </div>
+                                <div class="file-info-meta">
+                                    <span id="local-file-size">0 KB</span>
+                                    <span class="separator">•</span>
+                                    <span id="local-file-lines">0 lines</span>
+                                </div>
+                                <button class="load-file-btn" id="load-local-file-btn">
+                                    <span>✅ Load to Board</span>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -292,7 +389,10 @@
     <script src="src/components/SyntaxHighlighter.js?v=1"></script>
     <script src="src/components/GridEditor.js?v=27"></script>
     <script src="src/components/PdfViewer.js?v=3"></script>
+    <script src="src/components/MarkdownViewer.js?v=1"></script>
     <script src="src/components/FileBrowser.js?v=2"></script>
+    <script src="src/components/SharedFilesBrowser.js?v=3"></script>
+    <script src="src/components/LocalFileBrowser.js?v=1"></script>
     
     <!-- UI Managers -->
     <script src="src/ui/Toolbar.js?v=1"></script>
@@ -300,7 +400,8 @@
     <script src="src/ui/LayoutManager.js?v=1"></script>
     
     <!-- Modules -->
-    <script src="src/modules/Collaboration.js?v=51"></script>
+    <script src="src/modules/FileTransfer.js?v=3"></script>
+    <script src="src/modules/Collaboration.js?v=52"></script>
     
     <!-- Main Application Bootstrap -->
     <script src="src/main.js?v=1"></script>

@@ -123,7 +123,7 @@ function generateKeywordSidebar() {
     
     if (!sidebarConfig) {
         console.error('SIDEBAR_CONFIG not available for current language');
-        container.innerHTML = '<div class="error">Σφάλμα φόρτωσης λέξεων-κλειδιών</div>';
+        container.innerHTML = '<div class="error">Error loading keywords</div>';
         return;
     }
     
@@ -369,11 +369,24 @@ function init() {
         // Expose globally for FileBrowser and other modules
         window.gridEditor = gridEditor;
         
+        // Debounce timer for collaboration sync
+        let syncDebounceTimer = null;
+        const SYNC_DEBOUNCE_MS = 150;
+        
         // Set up GridEditor callbacks for collaboration
         gridEditor.onContentChange = (code) => {
+            // Update line numbers immediately (UI feedback)
             StatusBar.updateLineNumbers();
+            
+            // Debounce collaboration sync to reduce WebSocket flooding
             if (typeof Collaboration !== 'undefined' && Collaboration.connected && !Collaboration.isUpdatingFromRemote) {
-                Collaboration.sendCodeUpdate(code);
+                if (syncDebounceTimer) {
+                    clearTimeout(syncDebounceTimer);
+                }
+                syncDebounceTimer = setTimeout(() => {
+                    Collaboration.sendCodeUpdate(code);
+                    syncDebounceTimer = null;
+                }, SYNC_DEBOUNCE_MS);
             }
         };
         
@@ -457,6 +470,29 @@ function init() {
         FileBrowser.init();
     }
     
+    // 6.5 Initialize SharedFilesBrowser
+    if (typeof SharedFilesBrowser !== 'undefined') {
+        SharedFilesBrowser.init();
+    }
+    
+    // 6.6 Initialize LocalFileBrowser (Teacher only - open local files)
+    if (typeof LocalFileBrowser !== 'undefined') {
+        LocalFileBrowser.init({
+            onFileLoad: (content, filename) => {
+                // Load content into the GridEditor
+                if (gridEditor) {
+                    gridEditor.setValue(content);
+                    console.log(`📂 Loaded local file: ${filename}`);
+                    
+                    // Trigger collaboration sync if connected
+                    if (typeof Collaboration !== 'undefined' && Collaboration.connected) {
+                        Collaboration.sendCodeUpdate(content);
+                    }
+                }
+            }
+        });
+    }
+    
     // 7. Initialize LanguageManager and language-dependent UI
     if (typeof LanguageManager !== 'undefined') {
         LanguageManager.setLanguage('glossa').then(() => {
@@ -476,13 +512,18 @@ function init() {
         const languageSelector = document.getElementById('language-selector');
         if (languageSelector) {
             languageSelector.addEventListener('change', async (e) => {
+                // User manually changed language - reset the flag so initial code loads
+                if (typeof Collaboration !== 'undefined') {
+                    Collaboration.contentLoadedFromServer = false;
+                }
                 await LanguageManager.setLanguage(e.target.value);
             });
         }
         
         window.addEventListener('languageChanged', (e) => {
             const newLang = e.detail.language;
-            console.log('🔄 Language changed to:', newLang);
+            const isRemoteSync = e.detail.isRemoteSync || false;
+            console.log('🔄 Language changed to:', newLang, isRemoteSync ? '(remote sync)' : '(local)');
             
             // Update selector if needed
             const selector = document.getElementById('language-selector');
@@ -501,14 +542,29 @@ function init() {
             }
             
             // Clear editor and set new language's initial code
-            const content = LanguageManager.getContent();
-            const initialCode = content?.initialCode || '';
-            if (gridEditor) {
-                gridEditor.setValue(initialCode);
-                gridEditor.render();
+            // BUT ONLY if:
+            // 1. This is NOT a remote sync (we already have the code from server)
+            // 2. Collaboration hasn't already loaded content from server
+            const collaborationLoadedContent = typeof Collaboration !== 'undefined' && Collaboration.contentLoadedFromServer;
+            
+            if (!isRemoteSync && !collaborationLoadedContent) {
+                const content = LanguageManager.getContent();
+                const initialCode = content?.initialCode || '';
+                if (gridEditor) {
+                    gridEditor.setValue(initialCode);
+                    gridEditor.render();
+                } else {
+                    elements.codeEditor.value = initialCode;
+                    updateEditor();
+                }
             } else {
-                elements.codeEditor.value = initialCode;
-                updateEditor();
+                // Remote sync or already loaded from server - just re-render for syntax highlighting
+                if (gridEditor) {
+                    gridEditor.render();
+                }
+                if (collaborationLoadedContent) {
+                    console.log('📡 Skipping initial code - content already loaded from server');
+                }
             }
             
             // Regenerate keyword sidebar and dropdowns for new language

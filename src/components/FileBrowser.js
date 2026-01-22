@@ -54,8 +54,26 @@ const FileBrowser = {
     
     /**
      * Switch between panels (Activity Bar)
+     * If sidebar is collapsed, clicking a panel tab will expand it
+     * If clicking the same active panel, toggle sidebar visibility
      */
     switchPanel(panelId) {
+        const sidePanel = document.getElementById('side-panel');
+        const isCollapsed = sidePanel && sidePanel.classList.contains('collapsed');
+        const currentActiveBtn = document.querySelector('.activity-btn[data-panel].active');
+        const isClickingActivePanel = currentActiveBtn && currentActiveBtn.dataset.panel === panelId;
+        
+        // If clicking the currently active panel and sidebar is open, collapse it
+        if (isClickingActivePanel && !isCollapsed) {
+            this.toggleSidePanel();
+            return;
+        }
+        
+        // If sidebar is collapsed, expand it
+        if (isCollapsed) {
+            this.expandSidePanel();
+        }
+        
         // Update activity bar buttons
         document.querySelectorAll('.activity-btn[data-panel]').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.panel === panelId);
@@ -72,6 +90,36 @@ const FileBrowser = {
         }
     },
     
+    /**
+     * Expand side panel (show it)
+     */
+    expandSidePanel() {
+        const sidePanel = document.getElementById('side-panel');
+        const toggleBtn = document.querySelector('.activity-btn[data-action="toggle-sidebar"] .activity-icon');
+        
+        if (sidePanel && sidePanel.classList.contains('collapsed')) {
+            sidePanel.classList.remove('collapsed');
+            if (toggleBtn) {
+                toggleBtn.textContent = '◀';
+            }
+        }
+    },
+    
+    /**
+     * Collapse side panel (hide it)
+     */
+    collapseSidePanel() {
+        const sidePanel = document.getElementById('side-panel');
+        const toggleBtn = document.querySelector('.activity-btn[data-action="toggle-sidebar"] .activity-icon');
+        
+        if (sidePanel && !sidePanel.classList.contains('collapsed')) {
+            sidePanel.classList.add('collapsed');
+            if (toggleBtn) {
+                toggleBtn.textContent = '▶';
+            }
+        }
+    },
+
     /**
      * Toggle side panel visibility
      */
@@ -106,7 +154,7 @@ const FileBrowser = {
         if (!fileList) return;
         
         // Show loading state
-        fileList.innerHTML = '<div class="file-empty">Φόρτωση...</div>';
+        fileList.innerHTML = '<div class="file-empty">Loading...</div>';
         
         console.log('📁 FileBrowser.loadFolder:', { path, rootPath: this.rootPath });
         
@@ -126,7 +174,7 @@ const FileBrowser = {
             this.updateBreadcrumb(path);
         } catch (error) {
             console.error('❌ FileBrowser network error:', error);
-            fileList.innerHTML = `<div class="file-empty">❌ Σφάλμα σύνδεσης: ${error.message}</div>`;
+            fileList.innerHTML = `<div class="file-empty">❌ Connection error: ${error.message}</div>`;
         }
     },
     
@@ -139,6 +187,7 @@ const FileBrowser = {
         const ext = filename.split('.').pop().toLowerCase();
         const iconMap = {
             'gls': '📘',      // GLOSSA files - blue book
+            'glo': '📘',      // GLOSSA files - blue book
             'py': '🐍',       // Python files - snake
             'cpp': '⚙️',      // C++ files - gear
             'h': '📋',        // Header files - clipboard
@@ -148,6 +197,7 @@ const FileBrowser = {
             'js': '📜',       // JavaScript
             'json': '📦',     // JSON config
             'md': '📝',       // Markdown
+            'pdf': '📕',      // PDF files
             'txt': '📄',      // Text files
             'tex': '📐'       // LaTeX files
         };
@@ -162,14 +212,14 @@ const FileBrowser = {
         const fileList = document.getElementById('file-list');
         
         if (!items || items.length === 0) {
-            fileList.innerHTML = '<div class="file-empty">Κενός φάκελος</div>';
+            fileList.innerHTML = '<div class="file-empty">Empty folder</div>';
             return;
         }
         
         fileList.innerHTML = items.map(item => `
             <div class="file-item ${item.type}" data-path="${item.path}" data-type="${item.type}">
                 <span class="file-icon">${this.getFileIcon(item.name, item.type)}</span>
-                <span class="file-name">${item.name.replace(/\.(gls|py|cpp|h)$/, '')}</span>
+                <span class="file-name">${item.name.replace(/\.(gls|glo|py|cpp|h|md|pdf)$/, '')}</span>
             </div>
         `).join('');
         
@@ -232,7 +282,7 @@ const FileBrowser = {
     },
     
     /**
-     * Load file content into editor
+     * Load file content into editor or viewer
      * @param {string} path - Path to the file
      * @param {Object} options - Optional: { gridEditor, elements, updateEditor }
      */
@@ -242,11 +292,66 @@ const FileBrowser = {
         const elements = options.elements || window.elements;
         const updateEditor = options.updateEditor || window.updateEditor;
         
+        // Get file extension
+        const ext = path.split('.').pop().toLowerCase();
+        
         try {
             const response = await fetch(`/api/files/content?path=${encodeURIComponent(path)}`);
             if (!response.ok) throw new Error('Failed to load file');
             
             const data = await response.json();
+            
+            // Handle markdown files specially
+            if (ext === 'md') {
+                // Switch to Markdown mode and load content
+                if (window.LayoutManager) {
+                    window.LayoutManager.switchToMode('markdown');
+                }
+                if (typeof MarkdownViewer !== 'undefined') {
+                    await MarkdownViewer.loadMarkdown(data.content, true, data.name);
+                }
+                
+                // Sync mode change
+                if (typeof Collaboration !== 'undefined' && Collaboration.connected) {
+                    Collaboration.sendModeChange('markdown');
+                }
+                
+                // Show toast notification
+                if (typeof showToast === 'function') {
+                    showToast(`📝 Loaded: ${data.name}`, 'success');
+                }
+                return;
+            }
+            
+            // Handle PDF files
+            if (ext === 'pdf' && data.type === 'binary') {
+                // Switch to PDF mode and load content
+                if (window.LayoutManager) {
+                    window.LayoutManager.switchToMode('pdf');
+                }
+                if (typeof PdfViewer !== 'undefined' && data.content) {
+                    await PdfViewer.loadPdf(data.content, true);
+                    
+                    if (typeof Collaboration !== 'undefined' && Collaboration.connected) {
+                        Collaboration.sendModeChange('pdf');
+                        Collaboration.sendPdfLoad(data.content, data.name);
+                    }
+                }
+                
+                if (typeof showToast === 'function') {
+                    showToast(`📄 Loaded: ${data.name}`, 'success');
+                }
+                return;
+            }
+            
+            // Default: Load into code editor
+            // Make sure we're in code mode
+            if (window.LayoutManager && window.LayoutManager.currentMode !== 'code') {
+                window.LayoutManager.switchToMode('code');
+                if (typeof Collaboration !== 'undefined' && Collaboration.connected) {
+                    Collaboration.sendModeChange('code');
+                }
+            }
             
             // Update editor (GridEditor or legacy)
             if (gridEditor) {
@@ -265,7 +370,7 @@ const FileBrowser = {
             
             // Show toast notification
             if (typeof showToast === 'function') {
-                showToast(`📄 Φορτώθηκε: ${data.name.replace('.gls', '')}`, 'success');
+                showToast(`📄 Loaded: ${data.name.replace(/\.(gls|glo)$/, '')}`, 'success');
             }
             
             // Focus the editor
@@ -278,7 +383,7 @@ const FileBrowser = {
         } catch (error) {
             console.error('Error loading file:', error);
             if (typeof showToast === 'function') {
-                showToast('❌ Σφάλμα φόρτωσης αρχείου', 'error');
+                showToast('❌ Error loading file', 'error');
             }
         }
     }

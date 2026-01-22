@@ -40,7 +40,8 @@ function showToast(message, type = 'info') {
     }
     
     toastMessage.textContent = message;
-    toast.className = `toast ${type}`;
+    toast.className = `toast ${type}`; // This removes 'hidden' class
+    toast.classList.remove('hidden'); // Ensure hidden is removed
     
     // Force reflow for animation
     void toast.offsetWidth;
@@ -291,7 +292,7 @@ const HandRaiseAndReactions = {
                 Collaboration.sendHandRaise(newState);
                 handRaiseBtn.classList.toggle('raised', newState);
                 handRaiseBtn.textContent = newState ? '🙋' : '✋';
-                handRaiseBtn.title = newState ? 'Κατέβασε το χέρι' : 'Σήκωσε το χέρι σου';
+                handRaiseBtn.title = newState ? 'Lower your hand' : 'Raise your hand';
             });
         }
         
@@ -303,7 +304,7 @@ const HandRaiseAndReactions = {
                 
                 const names = Array.from(Collaboration.raisedHands.values());
                 if (names.length > 0) {
-                    showToast(`✋ Χέρια: ${names.join(', ')}`);
+                    showToast(`✋ Hands: ${names.join(', ')}`);
                 }
             });
         }
@@ -317,8 +318,8 @@ const HandRaiseAndReactions = {
                 const newState = !Collaboration.focusModeEnabled;
                 Collaboration.sendFocusMode(newState);
                 focusModeBtn.classList.toggle('active', newState);
-                focusModeBtn.title = newState ? 'Απενεργοποίηση Λειτουργίας Προσοχής' : 'Λειτουργία Προσοχής - Κλείδωμα μαθητών';
-                showToast(newState ? '🔒 Λειτουργία Προσοχής ενεργή' : '🔓 Λειτουργία Προσοχής απενεργοποιήθηκε');
+                focusModeBtn.title = newState ? 'Disable Focus Mode' : 'Focus Mode - Lock students';
+                showToast(newState ? '🔒 Focus Mode enabled' : '🔓 Focus Mode disabled');
             });
         }
         
