@@ -1,6 +1,7 @@
 /**
  * StatusBar Component
- * Handles line counts, character counts, and connection status updates
+ * Handles cursor position, language display, and connection status updates
+ * VS Code-style status bar
  * 
  * Dependencies:
  * - GridEditor (optional)
@@ -9,13 +10,20 @@
 const StatusBar = {
     elements: {
         lineNumbers: null,
-        lineCount: null,
-        charCount: null,
+        cursorPosition: null,
+        languageDisplay: null,
         connectionStatus: null,
         sessionTimer: null,
         ngrokLatency: null,
-        ngrokConnections: null
+        ngrokConnections: null,
+        raisedHands: null
     },
+    
+    // Current state
+    currentRow: 1,
+    currentCol: 1,
+    currentSelection: 0,
+    currentLanguage: 'GLOSSA',
     
     // Reference to editor
     gridEditor: null,
@@ -35,15 +43,17 @@ const StatusBar = {
         
         // Cache DOM elements
         this.elements.lineNumbers = document.getElementById('line-numbers');
-        this.elements.lineCount = document.getElementById('line-count');
-        this.elements.charCount = document.getElementById('char-count');
+        this.elements.cursorPosition = document.getElementById('cursor-position');
+        this.elements.languageDisplay = document.getElementById('status-language');
         this.elements.connectionStatus = document.getElementById('connection-status');
         this.elements.sessionTimer = document.getElementById('session-timer');
         this.elements.ngrokLatency = document.getElementById('ngrok-latency');
         this.elements.ngrokConnections = document.getElementById('ngrok-connections');
+        this.elements.raisedHands = document.getElementById('raised-hands');
         
         // Initial update
         this.updateLineNumbers();
+        this.updateCursor(1, 1, 0);
         
         // Initialize ngrok stats for teacher
         if (this.isTeacher) {
@@ -54,22 +64,73 @@ const StatusBar = {
     },
     
     /**
-     * Update line numbers display
+     * Update cursor position display (VS Code style)
+     * @param {number} row - Current line number (1-based)
+     * @param {number} col - Current column number (1-based)
+     * @param {number} selectionLen - Number of characters selected (0 if none)
+     */
+    updateCursor(row, col, selectionLen = 0) {
+        this.currentRow = row;
+        this.currentCol = col;
+        this.currentSelection = selectionLen;
+        
+        if (this.elements.cursorPosition) {
+            let text = `Ln ${row}, Col ${col}`;
+            if (selectionLen > 0) {
+                text += ` (${selectionLen} selected)`;
+            }
+            this.elements.cursorPosition.textContent = text;
+        }
+    },
+    
+    /**
+     * Set the current language display
+     * @param {string} langName - Language name to display
+     */
+    setLanguage(langName) {
+        this.currentLanguage = langName.toUpperCase();
+        
+        if (this.elements.languageDisplay) {
+            this.elements.languageDisplay.textContent = this.currentLanguage;
+        }
+    },
+    
+    /**
+     * Update raised hands indicator with alert state
+     * @param {number} count - Number of raised hands
+     */
+    updateRaisedHands(count) {
+        if (this.elements.raisedHands) {
+            const countEl = this.elements.raisedHands.querySelector('#raised-hands-count');
+            if (countEl) {
+                countEl.textContent = count;
+            }
+            
+            // Show/hide based on count
+            if (count > 0) {
+                this.elements.raisedHands.style.display = 'inline-flex';
+                this.elements.raisedHands.classList.add('status-alert');
+            } else {
+                this.elements.raisedHands.style.display = 'none';
+                this.elements.raisedHands.classList.remove('status-alert');
+            }
+        }
+    },
+    
+    /**
+     * Update line numbers display (gutter)
      */
     updateLineNumbers() {
-        let lineCount, charCount;
+        let lineCount;
         
         if (this.gridEditor) {
             lineCount = this.gridEditor.getLineCount();
-            charCount = this.gridEditor.getCharCount();
         } else if (this.legacyEditor) {
             const code = this.legacyEditor.value;
             const lines = code.split('\n');
             lineCount = lines.length;
-            charCount = code.length;
         } else {
             lineCount = 1;
-            charCount = 0;
         }
         
         // Build line numbers HTML
@@ -94,14 +155,6 @@ const StatusBar = {
                     });
                 });
             }
-        }
-        
-        // Update status bar counts
-        if (this.elements.lineCount) {
-            this.elements.lineCount.textContent = `Lines: ${lineCount}`;
-        }
-        if (this.elements.charCount) {
-            this.elements.charCount.textContent = `Characters: ${charCount}`;
         }
     },
     

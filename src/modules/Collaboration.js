@@ -384,11 +384,41 @@ const Collaboration = {
                 // Redirect to student mode
                 window.location.href = window.location.pathname;
                 break;
+            
+            case 'auth_required':
+                // Student needs to enter access code (waiting room)
+                this.myId = message.yourId;
+                this.myRole = message.yourRole;
+                console.log('🚪 Access code required - showing lobby');
+                
+                // Show the lobby overlay
+                if (typeof LobbyManager !== 'undefined') {
+                    LobbyManager.show();
+                }
+                break;
+            
+            case 'auth_failed':
+                // Wrong access code entered
+                console.log('❌ Wrong access code');
+                if (typeof LobbyManager !== 'undefined') {
+                    LobbyManager.onAuthFailed(message.message);
+                }
+                break;
+            
+            case 'admin_code':
+                // Teacher received access control info
+                this._handleAdminCode(message);
+                break;
                 
             case 'init':
                 this.myId = message.yourId;
                 this.myRole = message.yourRole;
                 this.connectedUsers = message.connectedUsers;
+                
+                // Hide lobby if it was showing
+                if (typeof LobbyManager !== 'undefined') {
+                    LobbyManager.hide();
+                }
                 
                 // Find and set our own name from connectedUsers
                 const me = this.connectedUsers.find(u => u.id === this.myId);
@@ -950,6 +980,89 @@ const Collaboration = {
                 code: code,
                 templateName: templateName
             }));
+        }
+    },
+    
+    // ============================================
+    // ACCESS CONTROL METHODS
+    // ============================================
+    
+    /**
+     * Send access code verification (student)
+     * @param {string} code - The 4-digit code to verify
+     */
+    sendVerifyCode(code) {
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            console.log('🔐 Sending verification code...');
+            this._send(JSON.stringify({
+                type: 'verify_code',
+                code: code
+            }));
+        }
+    },
+    
+    /**
+     * Request current access code from server (teacher)
+     */
+    requestAccessCode() {
+        if (this.connected && this.myRole === 'teacher') {
+            this._send(JSON.stringify({
+                type: 'admin_get_code'
+            }));
+        }
+    },
+    
+    /**
+     * Toggle public access mode (teacher)
+     * @param {boolean} enabled - Whether public access should be enabled
+     */
+    setPublicAccess(enabled) {
+        if (this.connected && this.myRole === 'teacher') {
+            console.log(`🚪 Setting public access: ${enabled ? 'ON' : 'OFF'}`);
+            this._send(JSON.stringify({
+                type: 'admin_set_public',
+                enabled: enabled
+            }));
+        }
+    },
+    
+    /**
+     * Generate a new access code (teacher)
+     */
+    cycleAccessCode() {
+        if (this.connected && this.myRole === 'teacher') {
+            console.log('🔄 Requesting new access code...');
+            this._send(JSON.stringify({
+                type: 'admin_cycle_code'
+            }));
+        }
+    },
+    
+    /**
+     * Handle admin_code message (received access control info)
+     */
+    _handleAdminCode(message) {
+        console.log(`🔐 Access Code: ${message.accessCode}, Public: ${message.publicAccess}`);
+        
+        // Update the classroom controls UI if available
+        const codeDisplay = document.getElementById('access-code-value');
+        const publicToggle = document.getElementById('public-access-toggle');
+        
+        if (codeDisplay) {
+            codeDisplay.textContent = message.accessCode;
+        }
+        
+        if (publicToggle) {
+            if (message.publicAccess) {
+                publicToggle.classList.add('active');
+            } else {
+                publicToggle.classList.remove('active');
+            }
+        }
+        
+        // Show toast notification
+        if (message.publicAccess) {
+            showToast('🚪 Free Enter: ON - Students can join without code', 'info');
         }
     },
     

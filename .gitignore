@@ -36,7 +36,11 @@ build/
 
 # Project Documentation & Sources to Ignore
 GEMINI.md
+prompt.md
 *.tex
 
 .gemini/
 gha-creds-*.json
+
+# GitHub workflows
+.github/

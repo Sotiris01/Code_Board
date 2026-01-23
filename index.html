@@ -20,6 +20,54 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
+    <!-- ============================================ -->
+    <!-- LOBBY OVERLAY - Waiting Room for Students -->
+    <!-- ============================================ -->
+    <div id="lobby-overlay" class="lobby-overlay">
+        <div class="lobby-card">
+            <div class="lobby-header">
+                <h1 class="lobby-title">📝 Code Board</h1>
+                <p class="lobby-subtitle">Collaborative Coding Classroom</p>
+            </div>
+            
+            <div class="lobby-teacher-info">
+                <h3 class="teacher-title">👨‍🏫 Teacher</h3>
+                <div class="teacher-name" id="lobby-teacher-name">Loading...</div>
+                <div class="teacher-contact">
+                    <span id="lobby-teacher-email">📧 Loading...</span>
+                    <span id="lobby-teacher-phone">📱 Loading...</span>
+                    <span id="lobby-teacher-discord">💬 Loading...</span>
+                </div>
+            </div>
+            
+            <div class="lobby-divider"></div>
+            
+            <div class="lobby-form">
+                <p class="lobby-instructions">Enter the 4-digit class code to join:</p>
+                <div class="lobby-input-group">
+                    <input 
+                        type="text" 
+                        id="lobby-code-input" 
+                        class="lobby-code-input" 
+                        maxlength="4" 
+                        placeholder="• • • •"
+                        inputmode="numeric"
+                        pattern="[0-9]*"
+                        autocomplete="off"
+                    >
+                </div>
+                <div id="lobby-error" class="lobby-error"></div>
+                <button id="lobby-join-btn" class="lobby-join-btn">
+                    Enter Class
+                </button>
+            </div>
+            
+            <div class="lobby-footer">
+                <p>Waiting for the teacher to share the access code...</p>
+            </div>
+        </div>
+    </div>
+
     <div class="app-container">
         <!-- Header / Toolbar -->
         <header class="toolbar">
@@ -116,6 +164,22 @@
                 </div>
             </div>
             <div class="toolbar-right">
+                <!-- Classroom Controls (Teacher only) -->
+                <div id="classroom-controls" class="classroom-controls teacher-only" style="display: none;">
+                    <div class="access-code-display">
+                        <span class="access-code-label">Code:</span>
+                        <span id="access-code-value" class="access-code-value">----</span>
+                        <div class="access-code-actions">
+                            <button id="copy-code-btn" class="code-action-btn" title="Copy Code">📋</button>
+                            <button id="cycle-code-btn" class="code-action-btn" title="New Code">🔄</button>
+                        </div>
+                    </div>
+                    <div class="public-access-toggle">
+                        <span class="public-access-label">Free Enter</span>
+                        <div id="public-access-toggle" class="toggle-switch" title="Allow students to join without code"></div>
+                    </div>
+                </div>
+                
                 <!-- Theme Toggle -->
                 <button id="theme-toggle-btn" class="btn btn-icon-only" title="Change Theme (Ctrl+Shift+T)">
                     <span class="btn-icon theme-icon">🌙</span>
@@ -281,32 +345,27 @@
         <!-- Footer / Status Bar -->
         <footer class="status-bar">
             <div class="status-left">
-                <span id="line-count">Lines: 1</span>
-                <span class="separator">|</span>
-                <span id="char-count">Characters: 0</span>
-                <span class="separator">|</span>
-                <span id="network-upload" class="network-traffic low" title="Upload per second">↑ 0 B/s</span>
-                <span id="network-download" class="network-traffic low" title="Download per second">↓ 0 B/s</span>
+                <!-- Cursor Position (VS Code style) -->
+                <span id="cursor-position" class="status-item">Ln 1, Col 1</span>
+                <span class="status-item" id="network-upload" title="Upload per second">↑ 0 B/s</span>
+                <span class="status-item" id="network-download" title="Download per second">↓ 0 B/s</span>
                 <!-- Student Hand Raise Button -->
                 <button id="hand-raise-btn" class="hand-raise-btn student-only" title="Raise Your Hand">✋</button>
                 <!-- Teacher: Raised Hands Indicator -->
-                <span id="raised-hands" class="raised-hands teacher-only" style="display: none;" title="Students with Raised Hands">✋ <span id="raised-hands-count">0</span></span>
+                <span id="raised-hands" class="raised-hands teacher-only" title="Students with Raised Hands">✋ <span id="raised-hands-count">0</span></span>
             </div>
             <div class="status-center">
                 <!-- Session Timer -->
-                <span id="session-timer" class="session-timer" title="Session Duration">⏱️ 00:00</span>
-                <span class="separator">|</span>
+                <span id="session-timer" class="status-item session-timer" title="Session Duration">⏱️ 00:00</span>
                 <!-- Student List (Teacher only) -->
-                <div id="student-list-toggle" class="student-list-toggle teacher-only" title="Connected Students">
+                <div id="student-list-toggle" class="status-item student-list-toggle teacher-only" title="Connected Students">
                     <span class="student-icon">👥</span>
                     <span id="student-count" class="student-count">0</span>
                 </div>
-                <span class="separator teacher-only">|</span>
                 <!-- Ngrok Stats (Teacher only) -->
                 <div id="ngrok-stats" class="ngrok-stats" style="display: none;">
                     <span class="ngrok-icon">🌐</span>
                     <span id="ngrok-latency" class="ngrok-latency" title="Connection Latency">--ms</span>
-                    <span class="separator">|</span>
                     <span id="ngrok-connections" class="ngrok-connections" title="Active Connections">0 👥</span>
                 </div>
             </div>
@@ -323,6 +382,8 @@
                     <span class="reaction-count" data-reaction="confused">❓ <span>0</span></span>
                     <span class="reaction-count" data-reaction="repeat">🔄 <span>0</span></span>
                 </div>
+                <!-- Language Badge -->
+                <span id="status-language" class="status-item status-language">GLOSSA</span>
             </div>
         </footer>
     </div>
@@ -395,13 +456,14 @@
     <script src="src/components/LocalFileBrowser.js?v=1"></script>
     
     <!-- UI Managers -->
-    <script src="src/ui/Toolbar.js?v=1"></script>
-    <script src="src/ui/StatusBar.js?v=1"></script>
+    <script src="src/ui/Toolbar.js?v=2"></script>
+    <script src="src/ui/StatusBar.js?v=2"></script>
     <script src="src/ui/LayoutManager.js?v=1"></script>
+    <script src="src/ui/LobbyManager.js?v=1"></script>
     
     <!-- Modules -->
     <script src="src/modules/FileTransfer.js?v=3"></script>
-    <script src="src/modules/Collaboration.js?v=52"></script>
+    <script src="src/modules/Collaboration.js?v=53"></script>
     
     <!-- Main Application Bootstrap -->
     <script src="src/main.js?v=1"></script>

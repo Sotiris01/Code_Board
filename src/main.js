@@ -391,12 +391,24 @@ function init() {
         };
         
         gridEditor.onSelectionChange = (tiles) => {
+            // Update StatusBar with selection count
+            if (typeof StatusBar !== 'undefined') {
+                const selectionLen = gridEditor.getSelectionLength ? gridEditor.getSelectionLength() : 0;
+                StatusBar.updateCursor(gridEditor.cursor.row + 1, gridEditor.cursor.col + 1, selectionLen);
+            }
+            
             if (typeof Collaboration !== 'undefined' && Collaboration.connected && Collaboration.myRole === 'teacher') {
                 Collaboration.sendHighlightTiles(tiles);
             }
         };
         
         gridEditor.onCursorChange = (cursor) => {
+            // Update StatusBar with cursor position (VS Code style: 1-based line numbers)
+            if (typeof StatusBar !== 'undefined') {
+                const selectionLen = gridEditor.getSelectionLength ? gridEditor.getSelectionLength() : 0;
+                StatusBar.updateCursor(cursor.row + 1, cursor.col + 1, selectionLen);
+            }
+            
             if (typeof Collaboration !== 'undefined' && Collaboration.connected && Collaboration.myRole === 'student') {
                 Collaboration.sendCursorUpdate(0, cursor.row + 1, cursor.col + 1);
             }
@@ -447,6 +459,11 @@ function init() {
     
     if (typeof LayoutManager !== 'undefined') {
         LayoutManager.init({ gridEditor, isTeacher });
+    }
+    
+    // Initialize LobbyManager (waiting room for students)
+    if (typeof LobbyManager !== 'undefined') {
+        LobbyManager.init();
     }
     
     // 4. Set up legacy editor events
@@ -500,6 +517,11 @@ function init() {
             console.log('🌐 Language initialized:', currentLang);
             initLanguageDependentUI();
             
+            // Set initial StatusBar language
+            if (typeof StatusBar !== 'undefined') {
+                StatusBar.setLanguage(currentLang);
+            }
+            
             // Set FileBrowser root to current language content folder
             if (typeof FileBrowser !== 'undefined') {
                 FileBrowser.setRoot(currentLang);
@@ -524,6 +546,11 @@ function init() {
             const newLang = e.detail.language;
             const isRemoteSync = e.detail.isRemoteSync || false;
             console.log('🔄 Language changed to:', newLang, isRemoteSync ? '(remote sync)' : '(local)');
+            
+            // Update StatusBar language badge
+            if (typeof StatusBar !== 'undefined') {
+                StatusBar.setLanguage(newLang);
+            }
             
             // Update selector if needed
             const selector = document.getElementById('language-selector');

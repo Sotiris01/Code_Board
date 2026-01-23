@@ -481,6 +481,11 @@ class GridEditor {
         });
     }
     
+    getSelectionLength() {
+        // Return the number of characters selected (for status bar display)
+        return this.selection.size;
+    }
+
     // ============================================
     // KEYBOARD HANDLING
     // ============================================

@@ -611,10 +611,11 @@ body.light-theme .theme-icon::before {
     height: var(--statusbar-height);
     padding: 0 10px;
     background-color: var(--bg-statusbar);
-    color: white;
+    color: var(--text-statusbar);
     font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
     font-size: 12px;
     flex-shrink: 0;
+    -webkit-user-select: none;
     user-select: none;
 }
 
@@ -631,15 +632,22 @@ body.light-theme .theme-icon::before {
     gap: 0;
 }
 
-/* Status Bar Items */
+/* Status Bar Items - VS Code style with hover and borders */
 .status-item {
     display: flex;
     align-items: center;
     gap: 4px;
-    padding: 0 8px;
-    height: 100%;
+    padding: 0 10px;
+    height: var(--statusbar-height);
     cursor: default;
     transition: background-color 0.1s ease;
+    border-right: 1px solid rgba(255, 255, 255, 0.15);
+    white-space: nowrap;
+    font-size: 12px;
+}
+
+.status-item:last-child {
+    border-right: none;
 }
 
 .status-item:hover {
@@ -650,22 +658,52 @@ body.light-theme .theme-icon::before {
     cursor: pointer;
 }
 
-.status-item-icon {
-    font-size: 14px;
-    opacity: 0.9;
+/* Language Badge - Right side accent */
+.status-language {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    padding: 2px 8px !important;
+    height: auto !important;
+    margin-left: 8px;
 }
 
-.status-item-text {
-    font-size: 12px;
-    white-space: nowrap;
+.status-language:hover {
+    background-color: rgba(255, 255, 255, 0.2);
 }
 
-/* Status Separator */
-.status-separator {
-    width: 1px;
-    height: 14px;
-    background-color: rgba(255, 255, 255, 0.3);
-    margin: 0 4px;
+/* Network Traffic in status bar */
+#network-upload,
+#network-download {
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
+    font-size: 11px;
+}
+
+#network-upload.high,
+#network-download.high {
+    color: #f48771;
+}
+
+#network-upload.medium,
+#network-download.medium {
+    color: #cca700;
+}
+
+/* Status Alert Animation (for raised hands) */
+@keyframes status-alert-pulse {
+    0%, 100% {
+        background-color: rgba(255, 152, 0, 0.3);
+    }
+    50% {
+        background-color: rgba(255, 152, 0, 0.6);
+    }
+}
+
+.status-alert {
+    animation: status-alert-pulse 1.5s ease-in-out infinite;
+    border-color: #ff9800 !important;
 }
 
 /* Ngrok Stats Display */
@@ -2622,32 +2660,40 @@ body.is-student .teacher-only {
 
 .hand-raise-btn {
     background: transparent;
-    border: 1px solid var(--border-color);
+    border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 4px;
     padding: 2px 8px;
     font-size: 16px;
     cursor: pointer;
     transition: all 0.2s ease;
     margin-left: 8px;
+    color: inherit;
 }
 
 .hand-raise-btn:hover {
-    background: rgba(255, 193, 7, 0.2);
+    background: rgba(255, 193, 7, 0.3);
     border-color: #ffc107;
 }
 
+/* Active state - High contrast for visibility */
 .hand-raise-btn.raised {
-    background: rgba(255, 193, 7, 0.3);
-    border-color: #ffc107;
+    background: #ffffff;
+    border-color: #ffffff;
+    color: #1e1e1e;
+    font-weight: bold;
     animation: hand-pulse 1s ease-in-out infinite;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
 }
 
 @keyframes hand-pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
+    0%, 100% { transform: scale(1); box-shadow: 0 0 8px rgba(255, 255, 255, 0.5); }
+    50% { transform: scale(1.1); box-shadow: 0 0 12px rgba(255, 255, 255, 0.8); }
 }
 
 .raised-hands {
+    display: none;
+    align-items: center;
+    gap: 4px;
     background: rgba(255, 193, 7, 0.2);
     border: 1px solid #ffc107;
     border-radius: 4px;
@@ -3076,5 +3122,348 @@ body.is-student .teacher-only {
 
 .load-file-btn:hover {
     background: #4caf50;
+}
+
+/* ============================================
+   LOBBY OVERLAY - Waiting Room Styles
+   ============================================ */
+
+.lobby-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.lobby-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.lobby-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    padding: 48px;
+    max-width: 450px;
+    width: 90%;
+    box-shadow: 
+        0 25px 50px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+    animation: lobby-card-appear 0.5s ease;
+}
+
+@keyframes lobby-card-appear {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.lobby-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.lobby-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 8px 0;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.lobby-subtitle {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin: 0;
+}
+
+.lobby-teacher-info {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.teacher-title {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin: 0 0 8px 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.teacher-name {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 12px;
+}
+
+.teacher-contact {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.teacher-contact a {
+    color: #64b5f6;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.teacher-contact a:hover {
+    color: #90caf9;
+    text-decoration: underline;
+}
+
+.lobby-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    margin: 24px 0;
+}
+
+.lobby-form {
+    text-align: center;
+}
+
+.lobby-instructions {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 1rem;
+    margin-bottom: 16px;
+}
+
+.lobby-input-group {
+    margin-bottom: 12px;
+}
+
+.lobby-code-input {
+    width: 180px;
+    height: 60px;
+    font-size: 2rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    text-align: center;
+    letter-spacing: 12px;
+    padding-left: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    color: #ffffff;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.lobby-code-input::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+    letter-spacing: 8px;
+}
+
+.lobby-code-input:focus {
+    border-color: #64b5f6;
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 20px rgba(100, 181, 246, 0.3);
+}
+
+.lobby-error {
+    color: #ef5350;
+    font-size: 0.9rem;
+    min-height: 24px;
+    margin-bottom: 8px;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+.lobby-error.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.lobby-join-btn {
+    width: 100%;
+    padding: 16px 32px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #ffffff;
+    background: linear-gradient(135deg, #4fc3f7 0%, #29b6f6 100%);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(79, 195, 247, 0.3);
+}
+
+.lobby-join-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(79, 195, 247, 0.4);
+}
+
+.lobby-join-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.lobby-join-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.lobby-footer {
+    text-align: center;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.lobby-footer p {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.85rem;
+    margin: 0;
+}
+
+/* ============================================
+   CLASSROOM CONTROLS - Teacher Access Panel
+   ============================================ */
+
+.classroom-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 12px;
+    margin-left: 12px;
+    border-left: 1px solid var(--border-color);
+}
+
+.access-code-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-tertiary);
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.access-code-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.access-code-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #4fc3f7;
+    letter-spacing: 4px;
+    min-width: 80px;
+    text-align: center;
+}
+
+.access-code-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.code-action-btn {
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.code-action-btn:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--accent-blue);
+}
+
+.public-access-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.public-access-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.toggle-switch {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.toggle-switch.active {
+    background: #4caf50;
+    border-color: #4caf50;
+}
+
+.toggle-switch::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    background: #ffffff;
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+}
+
+.toggle-switch.active::after {
+    transform: translateX(20px);
+}
+
+/* Responsive adjustments for lobby */
+@media (max-width: 500px) {
+    .lobby-card {
+        padding: 32px 24px;
+        border-radius: 16px;
+    }
+    
+    .lobby-title {
+        font-size: 2rem;
+    }
+    
+    .teacher-name {
+        font-size: 1.25rem;
+    }
+    
+    .lobby-code-input {
+        width: 160px;
+        height: 50px;
+        font-size: 1.5rem;
+        letter-spacing: 8px;
+    }
 }
 

@@ -307,6 +307,31 @@ app.get('/api/auth-config', (req, res) => {
     });
 });
 
+// API endpoint to get teacher info (public)
+app.get('/api/teacher-info', (req, res) => {
+    res.json(loadTeacherInfo());
+});
+
+// API endpoint to update teacher info (teacher only - should be protected in production)
+app.post('/api/teacher-info', express.json(), (req, res) => {
+    const { name, email, phone, discord } = req.body;
+    const info = { name, email, phone, discord };
+    
+    if (saveTeacherInfo(info)) {
+        res.json({ success: true, info });
+    } else {
+        res.status(500).json({ success: false, error: 'Failed to save teacher info' });
+    }
+});
+
+// API endpoint to get access control status (teacher only)
+app.get('/api/access-control', (req, res) => {
+    res.json({
+        accessCode: accessControl.accessCode,
+        publicAccess: accessControl.publicAccess
+    });
+});
+
 // API endpoint for folder upload (multipart/form-data)
 app.post('/api/upload', upload.array('files', 500), (req, res) => {
     try {
@@ -685,6 +710,62 @@ let currentState = {
     language: 'glossa' // Current language (synced from teacher)
 };
 
+// ============================================
+// ACCESS CONTROL - Waiting Room / Lobby System
+// ============================================
+
+// Generate a random 4-digit access code
+function generateAccessCode() {
+    return String(Math.floor(1000 + Math.random() * 9000));
+}
+
+// Access control state
+let accessControl = {
+    accessCode: generateAccessCode(),
+    publicAccess: false  // false = code required, true = free enter
+};
+
+// Track authenticated students (socket -> true/false)
+const authenticatedClients = new WeakMap();
+
+// Teacher info file path
+const TEACHER_INFO_FILE = path.join(__dirname, 'teacher-info.json');
+
+// Default teacher info
+const DEFAULT_TEACHER_INFO = {
+    name: "Sotiris Mpalatsias",
+    email: "sotiris.mp@gmail.com",
+    phone: "6983733346",
+    discord: "sotiris01"
+};
+
+// Load teacher info from file or use defaults
+function loadTeacherInfo() {
+    try {
+        if (fs.existsSync(TEACHER_INFO_FILE)) {
+            return JSON.parse(fs.readFileSync(TEACHER_INFO_FILE, 'utf8'));
+        }
+    } catch (e) {
+        console.error('Error loading teacher info:', e);
+    }
+    return DEFAULT_TEACHER_INFO;
+}
+
+// Save teacher info to file
+function saveTeacherInfo(info) {
+    try {
+        fs.writeFileSync(TEACHER_INFO_FILE, JSON.stringify(info, null, 2), 'utf8');
+        console.log('💾 Teacher info saved');
+        return true;
+    } catch (e) {
+        console.error('Error saving teacher info:', e);
+        return false;
+    }
+}
+
+console.log(`🔐 Access Code: ${accessControl.accessCode}`);
+console.log(`🚪 Public Access: ${accessControl.publicAccess ? 'ON' : 'OFF'}`);
+
 // Teacher password from environment variable (optional)
 const TEACHER_PASSWORD = process.env.TEACHER_PASSWORD || null;
 
@@ -780,25 +861,43 @@ wss.on('connection', (ws, req) => {
         console.log(`🔐 Teacher authenticated with password`);
     }
     
-    // Send current state to new client
-    ws.send(JSON.stringify({
-        type: 'init',
-        state: {
-            code: currentState.code,
-            cursorPosition: currentState.cursorPosition,
-            language: currentState.language
-        },
-        yourId: clientId,
-        yourRole: clientInfo.role,
-        connectedUsers: currentState.connectedUsers
-    }));
-    
-    // Notify others about new connection
-    broadcast({
-        type: 'user_joined',
-        user: { id: clientId, role: clientInfo.role, name: clientInfo.name },
-        connectedUsers: currentState.connectedUsers
-    }, ws);
+    // ACCESS CONTROL: Check if student needs to authenticate
+    if (!isTeacher && !accessControl.publicAccess) {
+        // Student needs to enter code - mark as not authenticated
+        authenticatedClients.set(ws, false);
+        
+        // Send auth_required instead of init
+        ws.send(JSON.stringify({
+            type: 'auth_required',
+            yourId: clientId,
+            yourRole: clientInfo.role
+        }));
+        
+        console.log(`🚪 ${clientInfo.name} in waiting room (code required)`);
+    } else {
+        // Teacher or public access - grant immediate access
+        authenticatedClients.set(ws, true);
+        
+        // Send current state to new client
+        ws.send(JSON.stringify({
+            type: 'init',
+            state: {
+                code: currentState.code,
+                cursorPosition: currentState.cursorPosition,
+                language: currentState.language
+            },
+            yourId: clientId,
+            yourRole: clientInfo.role,
+            connectedUsers: currentState.connectedUsers
+        }));
+        
+        // Notify others about new connection
+        broadcast({
+            type: 'user_joined',
+            user: { id: clientId, role: clientInfo.role, name: clientInfo.name },
+            connectedUsers: currentState.connectedUsers
+        }, ws);
+    }
     
     ws.on('message', (data) => {
         try {
@@ -1061,6 +1160,124 @@ wss.on('connection', (ws, req) => {
                             lineNumber: message.lineNumber
                         }, ws);
                         console.log(`📍 Teacher scrolled students to line ${message.lineNumber}`);
+                    }
+                    break;
+                
+                // ============================================
+                // ACCESS CONTROL MESSAGES
+                // ============================================
+                
+                case 'verify_code':
+                    // Student trying to verify access code
+                    if (client.role === 'student') {
+                        const providedCode = message.code;
+                        
+                        if (providedCode === accessControl.accessCode || accessControl.publicAccess) {
+                            // Code is correct - grant access
+                            authenticatedClients.set(ws, true);
+                            console.log(`✅ ${client.name} entered correct code - access granted`);
+                            
+                            // Send init with current state
+                            ws.send(JSON.stringify({
+                                type: 'init',
+                                state: {
+                                    code: currentState.code,
+                                    cursorPosition: currentState.cursorPosition,
+                                    language: currentState.language
+                                },
+                                yourId: client.id,
+                                yourRole: client.role,
+                                connectedUsers: currentState.connectedUsers
+                            }));
+                            
+                            // Notify others about new connection
+                            broadcast({
+                                type: 'user_joined',
+                                user: { id: client.id, role: client.role, name: client.name },
+                                connectedUsers: currentState.connectedUsers
+                            }, ws);
+                        } else {
+                            // Wrong code
+                            console.log(`❌ ${client.name} entered wrong code: ${providedCode}`);
+                            ws.send(JSON.stringify({
+                                type: 'auth_failed',
+                                message: 'Invalid code. Please try again.'
+                            }));
+                        }
+                    }
+                    break;
+                
+                case 'admin_get_code':
+                    // Teacher requesting current access code
+                    if (client.role === 'teacher') {
+                        ws.send(JSON.stringify({
+                            type: 'admin_code',
+                            accessCode: accessControl.accessCode,
+                            publicAccess: accessControl.publicAccess
+                        }));
+                    }
+                    break;
+                
+                case 'admin_set_public':
+                    // Teacher toggling public access mode
+                    if (client.role === 'teacher') {
+                        accessControl.publicAccess = !!message.enabled;
+                        console.log(`🚪 Public Access: ${accessControl.publicAccess ? 'ON' : 'OFF'}`);
+                        
+                        // Confirm to teacher
+                        ws.send(JSON.stringify({
+                            type: 'admin_code',
+                            accessCode: accessControl.accessCode,
+                            publicAccess: accessControl.publicAccess
+                        }));
+                        
+                        // If public access just turned on, admit all waiting students
+                        if (accessControl.publicAccess) {
+                            wss.clients.forEach(studentWs => {
+                                const studentClient = clients.get(studentWs);
+                                if (studentClient && 
+                                    studentClient.role === 'student' && 
+                                    !authenticatedClients.get(studentWs)) {
+                                    
+                                    authenticatedClients.set(studentWs, true);
+                                    console.log(`✅ ${studentClient.name} auto-admitted (public access)`);
+                                    
+                                    // Send init to student
+                                    studentWs.send(JSON.stringify({
+                                        type: 'init',
+                                        state: {
+                                            code: currentState.code,
+                                            cursorPosition: currentState.cursorPosition,
+                                            language: currentState.language
+                                        },
+                                        yourId: studentClient.id,
+                                        yourRole: studentClient.role,
+                                        connectedUsers: currentState.connectedUsers
+                                    }));
+                                    
+                                    // Notify others
+                                    broadcast({
+                                        type: 'user_joined',
+                                        user: { id: studentClient.id, role: studentClient.role, name: studentClient.name },
+                                        connectedUsers: currentState.connectedUsers
+                                    }, studentWs);
+                                }
+                            });
+                        }
+                    }
+                    break;
+                
+                case 'admin_cycle_code':
+                    // Teacher requesting a new access code
+                    if (client.role === 'teacher') {
+                        accessControl.accessCode = generateAccessCode();
+                        console.log(`🔐 New Access Code: ${accessControl.accessCode}`);
+                        
+                        ws.send(JSON.stringify({
+                            type: 'admin_code',
+                            accessCode: accessControl.accessCode,
+                            publicAccess: accessControl.publicAccess
+                        }));
                     }
                     break;
                     

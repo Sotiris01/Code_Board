@@ -13,7 +13,13 @@ const Toolbar = {
         clearBtn: null,
         fontSizeDisplay: null,
         fontIncreaseBtn: null,
-        fontDecreaseBtn: null
+        fontDecreaseBtn: null,
+        // Classroom controls elements
+        classroomControls: null,
+        accessCodeValue: null,
+        copyCodeBtn: null,
+        cycleCodeBtn: null,
+        publicAccessToggle: null
     },
     
     // Font size state
@@ -21,6 +27,9 @@ const Toolbar = {
     minFontSize: 12,
     maxFontSize: 36,
     fontStep: 2,
+    
+    // Access control state
+    publicAccess: false,
     
     // Reference to editor (GridEditor or null for legacy)
     gridEditor: null,
@@ -42,11 +51,21 @@ const Toolbar = {
         this.elements.fontIncreaseBtn = document.getElementById('font-increase');
         this.elements.fontDecreaseBtn = document.getElementById('font-decrease');
         
+        // Classroom controls elements
+        this.elements.classroomControls = document.getElementById('classroom-controls');
+        this.elements.accessCodeValue = document.getElementById('access-code-value');
+        this.elements.copyCodeBtn = document.getElementById('copy-code-btn');
+        this.elements.cycleCodeBtn = document.getElementById('cycle-code-btn');
+        this.elements.publicAccessToggle = document.getElementById('public-access-toggle');
+        
         // Set up event listeners
         this._bindEvents();
         
         // Initialize font size
         this.updateFontSize(this.fontSize);
+        
+        // Initialize classroom controls for teacher
+        this._initClassroomControls();
         
         console.log('🔧 Toolbar initialized');
     },
@@ -191,6 +210,114 @@ const Toolbar = {
     setEditors(gridEditor, legacyEditor) {
         this.gridEditor = gridEditor;
         this.legacyEditor = legacyEditor;
+    },
+    
+    // ============================================
+    // CLASSROOM CONTROLS (Teacher Only)
+    // ============================================
+    
+    /**
+     * Initialize classroom controls for teacher
+     */
+    _initClassroomControls() {
+        // Only show for teacher role
+        const urlParams = new URLSearchParams(window.location.search);
+        const isTeacher = urlParams.get('role') === 'teacher';
+        
+        if (!isTeacher || !this.elements.classroomControls) {
+            return;
+        }
+        
+        // Show classroom controls
+        this.elements.classroomControls.style.display = 'flex';
+        
+        // Bind classroom control events
+        if (this.elements.copyCodeBtn) {
+            this.elements.copyCodeBtn.addEventListener('click', () => this._copyAccessCode());
+        }
+        
+        if (this.elements.cycleCodeBtn) {
+            this.elements.cycleCodeBtn.addEventListener('click', () => this._cycleAccessCode());
+        }
+        
+        if (this.elements.publicAccessToggle) {
+            this.elements.publicAccessToggle.addEventListener('click', () => this._togglePublicAccess());
+        }
+        
+        // Request current access code from server after a short delay
+        // (wait for WebSocket connection)
+        setTimeout(() => {
+            if (typeof Collaboration !== 'undefined' && Collaboration.connected) {
+                Collaboration.requestAccessCode();
+            }
+        }, 1000);
+        
+        console.log('🎛️ Classroom controls initialized for teacher');
+    },
+    
+    /**
+     * Copy access code to clipboard
+     */
+    async _copyAccessCode() {
+        const code = this.elements.accessCodeValue?.textContent || '';
+        if (code && code !== '----') {
+            try {
+                await navigator.clipboard.writeText(code);
+                showToast('📋 Access code copied!', 'success');
+            } catch (err) {
+                console.error('Failed to copy code:', err);
+            }
+        }
+    },
+    
+    /**
+     * Generate new access code
+     */
+    _cycleAccessCode() {
+        if (typeof Collaboration !== 'undefined') {
+            Collaboration.cycleAccessCode();
+            showToast('🔄 Generating new code...', 'info');
+        }
+    },
+    
+    /**
+     * Toggle public access mode
+     */
+    _togglePublicAccess() {
+        this.publicAccess = !this.publicAccess;
+        
+        // Update toggle UI immediately for responsiveness
+        if (this.elements.publicAccessToggle) {
+            if (this.publicAccess) {
+                this.elements.publicAccessToggle.classList.add('active');
+            } else {
+                this.elements.publicAccessToggle.classList.remove('active');
+            }
+        }
+        
+        // Send to server
+        if (typeof Collaboration !== 'undefined') {
+            Collaboration.setPublicAccess(this.publicAccess);
+        }
+    },
+    
+    /**
+     * Update access code display (called from Collaboration)
+     */
+    updateAccessCode(code, isPublic) {
+        if (this.elements.accessCodeValue) {
+            this.elements.accessCodeValue.textContent = code;
+        }
+        
+        this.publicAccess = isPublic;
+        
+        if (this.elements.publicAccessToggle) {
+            if (isPublic) {
+                this.elements.publicAccessToggle.classList.add('active');
+            } else {
+                this.elements.publicAccessToggle.classList.remove('active');
+            }
+        }
     }
 };
 
