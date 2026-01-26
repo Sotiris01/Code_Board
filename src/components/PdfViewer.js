@@ -1,6 +1,7 @@
 /**
  * AEPP Board - PDF Viewer Module
  * Synchronized PDF viewing for teacher-student collaboration
+ * CONTINUOUS SCROLLING: All pages rendered vertically
  */
 
 const PdfViewer = {
@@ -14,10 +15,10 @@ const PdfViewer = {
     
     // DOM Elements
     container: null,
-    canvas: null,
-    ctx: null,
+    pagesContainer: null,  // Container for all page canvases
+    canvases: [],          // Array of canvas elements (one per page)
     laserPointer: null,
-    pageInfo: null,
+    scrollWrapper: null,
     
     // Sync state
     syncThrottle: null,
@@ -35,40 +36,32 @@ const PdfViewer = {
             return;
         }
         
-        // Create canvas for PDF rendering
-        this.canvas = document.createElement('canvas');
-        this.canvas.className = 'pdf-canvas';
-        this.ctx = this.canvas.getContext('2d');
+        // Create pages container (holds all page canvases)
+        this.pagesContainer = document.createElement('div');
+        this.pagesContainer.className = 'pdf-pages-container';
+        this.pagesContainer.style.position = 'relative';
+        this.pagesContainer.style.display = 'flex';
+        this.pagesContainer.style.flexDirection = 'column';
+        this.pagesContainer.style.alignItems = 'center';
+        this.pagesContainer.style.gap = '20px';
+        this.pagesContainer.style.padding = '20px';
         
-        // Create canvas wrapper (for positioning laser relative to canvas)
-        this.canvasWrapper = document.createElement('div');
-        this.canvasWrapper.className = 'pdf-canvas-wrapper';
-        this.canvasWrapper.style.position = 'relative';
-        this.canvasWrapper.style.display = 'inline-block';
-        this.canvasWrapper.appendChild(this.canvas);
-        
-        // Create laser pointer overlay (inside canvas wrapper for correct positioning)
+        // Create laser pointer overlay
         this.laserPointer = document.createElement('div');
         this.laserPointer.className = 'pdf-laser-pointer';
         this.laserPointer.style.display = 'none';
-        this.canvasWrapper.appendChild(this.laserPointer);
+        this.pagesContainer.appendChild(this.laserPointer);
         
         // Create wrapper for scrolling
         this.scrollWrapper = document.createElement('div');
         this.scrollWrapper.className = 'pdf-scroll-wrapper';
-        this.scrollWrapper.appendChild(this.canvasWrapper);
+        this.scrollWrapper.appendChild(this.pagesContainer);
         this.container.appendChild(this.scrollWrapper);
-        
-        // Create page info display
-        this.pageInfo = document.createElement('div');
-        this.pageInfo.className = 'pdf-page-info';
-        this.pageInfo.textContent = 'Σελίδα: -/-';
-        this.container.appendChild(this.pageInfo);
         
         // Bind events
         this._bindEvents();
         
-        console.log('📄 PDF Viewer initialized', isTeacher ? '(Teacher)' : '(Student)');
+        console.log('📄 PDF Viewer initialized (continuous scroll)', isTeacher ? '(Teacher)' : '(Student)');
     },
     
     /**
@@ -78,8 +71,8 @@ const PdfViewer = {
         if (this.isTeacher) {
             // Teacher: scroll and mouse events for sync
             this.scrollWrapper.addEventListener('scroll', () => this._onScroll());
-            this.scrollWrapper.addEventListener('mousemove', (e) => this._onMouseMove(e));
-            this.scrollWrapper.addEventListener('mouseleave', () => this._onMouseLeave());
+            this.pagesContainer.addEventListener('mousemove', (e) => this._onMouseMove(e));
+            this.pagesContainer.addEventListener('mouseleave', () => this._onMouseLeave());
             
             // Zoom with Ctrl+Wheel
             this.scrollWrapper.addEventListener('wheel', (e) => {
@@ -94,18 +87,7 @@ const PdfViewer = {
             this.scrollWrapper.style.overflow = 'hidden';
         }
         
-        // Keyboard navigation (teacher only)
-        document.addEventListener('keydown', (e) => {
-            if (!this.isActive || !this.isTeacher || !this.pdfDoc) return;
-            
-            if (e.key === 'ArrowRight' || e.key === 'PageDown') {
-                e.preventDefault();
-                this.nextPage();
-            } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
-                e.preventDefault();
-                this.prevPage();
-            }
-        });
+        // Keyboard navigation removed - continuous scrolling handles it
     },
     
     /**
@@ -132,10 +114,10 @@ const PdfViewer = {
             this.totalPages = this.pdfDoc.numPages;
             this.currentPage = 1;
             
-            console.log(`📄 PDF loaded: ${this.totalPages} pages`);
+            console.log(`📄 PDF loaded: ${this.totalPages} pages (continuous mode)`);
             
-            // Render first page
-            await this.renderPage(this.currentPage);
+            // Render ALL pages for continuous scrolling
+            await this.renderAllPages();
             
             return true;
         } catch (error) {
@@ -145,34 +127,51 @@ const PdfViewer = {
     },
     
     /**
-     * Render a specific page
+     * Render all pages for continuous scrolling
      */
-    async renderPage(pageNum) {
-        if (!this.pdfDoc || pageNum < 1 || pageNum > this.totalPages) return;
+    async renderAllPages() {
+        if (!this.pdfDoc) return;
         
-        this.currentPage = pageNum;
+        // Clear existing canvases
+        this.canvases.forEach(c => c.remove());
+        this.canvases = [];
         
-        const page = await this.pdfDoc.getPage(pageNum);
-        const viewport = page.getViewport({ scale: this.scale });
+        // Re-add laser pointer (it gets removed when clearing)
+        if (!this.pagesContainer.contains(this.laserPointer)) {
+            this.pagesContainer.appendChild(this.laserPointer);
+        }
         
-        // Set canvas dimensions (both the internal size AND the display size)
-        this.canvas.width = viewport.width;
-        this.canvas.height = viewport.height;
-        
-        // Also set CSS style to match (important for zoom to be visible!)
-        this.canvas.style.width = viewport.width + 'px';
-        this.canvas.style.height = viewport.height + 'px';
-        
-        // Render PDF page
-        const renderContext = {
-            canvasContext: this.ctx,
-            viewport: viewport
-        };
-        
-        await page.render(renderContext).promise;
+        // Render each page
+        for (let pageNum = 1; pageNum <= this.totalPages; pageNum++) {
+            const page = await this.pdfDoc.getPage(pageNum);
+            const viewport = page.getViewport({ scale: this.scale });
+            
+            // Create canvas for this page
+            const canvas = document.createElement('canvas');
+            canvas.className = 'pdf-canvas';
+            canvas.dataset.page = pageNum;
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            canvas.style.width = viewport.width + 'px';
+            canvas.style.height = viewport.height + 'px';
+            canvas.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
+            canvas.style.backgroundColor = 'white';
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Render PDF page
+            await page.render({
+                canvasContext: ctx,
+                viewport: viewport
+            }).promise;
+            
+            // Insert before laser pointer
+            this.pagesContainer.insertBefore(canvas, this.laserPointer);
+            this.canvases.push(canvas);
+        }
         
         // Update page info
-        this.pageInfo.textContent = `Σελίδα: ${this.currentPage}/${this.totalPages}`;
+        this._updateCurrentPage();
         
         // Sync to students if teacher
         if (this.isTeacher && typeof Collaboration !== 'undefined') {
@@ -181,41 +180,91 @@ const PdfViewer = {
     },
     
     /**
-     * Navigate to next page
+     * Update current page based on scroll position
+     */
+    _updateCurrentPage() {
+        if (this.canvases.length === 0) return;
+        
+        const scrollTop = this.scrollWrapper.scrollTop;
+        const wrapperHeight = this.scrollWrapper.clientHeight;
+        const scrollCenter = scrollTop + wrapperHeight / 2;
+        
+        // Find which page is most visible
+        let currentPage = 1;
+        for (let i = 0; i < this.canvases.length; i++) {
+            const canvas = this.canvases[i];
+            const canvasTop = canvas.offsetTop;
+            const canvasBottom = canvasTop + canvas.height;
+            
+            if (scrollCenter >= canvasTop && scrollCenter <= canvasBottom) {
+                currentPage = i + 1;
+                break;
+            } else if (scrollCenter < canvasTop) {
+                currentPage = Math.max(1, i);
+                break;
+            } else {
+                currentPage = i + 1;
+            }
+        }
+        
+        this.currentPage = currentPage;
+    },
+    
+    /**
+     * Render a specific page (for compatibility - now just scrolls to it)
+     */
+    async renderPage(pageNum) {
+        if (!this.pdfDoc || pageNum < 1 || pageNum > this.totalPages) return;
+        this.goToPage(pageNum);
+    },
+    
+    /**
+     * Navigate to next page (scroll to it)
      */
     async nextPage() {
         if (this.currentPage < this.totalPages) {
-            await this.renderPage(this.currentPage + 1);
-            this.scrollWrapper.scrollTop = 0;
+            this.goToPage(this.currentPage + 1);
         }
     },
     
     /**
-     * Navigate to previous page
+     * Navigate to previous page (scroll to it)
      */
     async prevPage() {
         if (this.currentPage > 1) {
-            await this.renderPage(this.currentPage - 1);
-            this.scrollWrapper.scrollTop = 0;
+            this.goToPage(this.currentPage - 1);
         }
     },
     
     /**
-     * Go to specific page
+     * Go to specific page (scroll to it)
      */
     async goToPage(pageNum) {
-        await this.renderPage(pageNum);
-        this.scrollWrapper.scrollTop = 0;
+        if (pageNum < 1 || pageNum > this.totalPages) return;
+        if (this.canvases.length === 0) return;
+        
+        const canvas = this.canvases[pageNum - 1];
+        if (canvas) {
+            canvas.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     },
     
     /**
-     * Set zoom level
+     * Set zoom level (re-renders all pages)
      */
     async setZoom(newScale) {
         const oldScale = this.scale;
         this.scale = Math.max(0.5, Math.min(3, newScale));
         console.log(`🔍 Zoom: ${Math.round(oldScale*100)}% → ${Math.round(this.scale*100)}%`);
-        await this.renderPage(this.currentPage);
+        
+        // Remember scroll ratio before re-render
+        const scrollRatio = this.scrollWrapper.scrollTop / (this.scrollWrapper.scrollHeight - this.scrollWrapper.clientHeight || 1);
+        
+        await this.renderAllPages();
+        
+        // Restore scroll position proportionally
+        const newScrollTop = scrollRatio * (this.scrollWrapper.scrollHeight - this.scrollWrapper.clientHeight);
+        this.scrollWrapper.scrollTop = newScrollTop;
     },
     
     /**
@@ -223,6 +272,9 @@ const PdfViewer = {
      */
     _onScroll() {
         if (!this.isTeacher) return;
+        
+        // Update current page display
+        this._updateCurrentPage();
         
         // Throttle sync
         const now = Date.now();
@@ -234,46 +286,31 @@ const PdfViewer = {
     
     /**
      * Handle mouse move for laser pointer
-     * 
-     * NEW APPROACH: Calculate position relative to PDF CANVAS dimensions
-     * (canvas.width/height) not viewport (getBoundingClientRect).
-     * This ensures coordinates are consistent regardless of zoom/scroll.
+     * Position is absolute pixels within pagesContainer
      */
     _onMouseMove(e) {
         if (!this.isTeacher || !this.isActive) return;
         
-        const rect = this.canvas.getBoundingClientRect();
+        const containerRect = this.pagesContainer.getBoundingClientRect();
         
-        // Mouse position relative to visible canvas (in screen pixels)
-        const screenX = e.clientX - rect.left;
-        const screenY = e.clientY - rect.top;
+        // getBoundingClientRect already accounts for scroll position
+        // So e.clientY - containerRect.top gives the correct position within the container
+        const absX = e.clientX - containerRect.left;
+        const absY = e.clientY - containerRect.top;
         
-        // Convert to PDF canvas coordinates (internal pixels)
-        // This accounts for the difference between display size and canvas size
-        const scaleX = this.canvas.width / rect.width;
-        const scaleY = this.canvas.height / rect.height;
-        
-        // Position in PDF canvas units (0 to canvas.width/height)
-        const pdfX = screenX * scaleX;
-        const pdfY = screenY * scaleY;
-        
-        // Send as ratio of canvas dimensions (0.0 to 1.0)
-        const x = pdfX / this.canvas.width;
-        const y = pdfY / this.canvas.height;
-        
-        // Send laser position
+        // Send absolute pixel position
         if (typeof Collaboration !== 'undefined') {
-            Collaboration.sendPdfLaser(x, y, true);
+            Collaboration.sendPdfLaser(absX, absY, true);
         }
         
         // Also show on teacher's screen
-        this._showLocalLaser(x, y, true);
+        this._showLocalLaser(absX, absY, true);
     },
     
     /**
-     * Show laser on local screen (teacher sees their own laser)
+     * Show laser on local screen (absolute position in pixels)
      */
-    _showLocalLaser(x, y, active) {
+    _showLocalLaser(absX, absY, active) {
         if (!this.laserPointer) return;
         
         if (!active) {
@@ -281,14 +318,9 @@ const PdfViewer = {
             return;
         }
         
-        // Convert PDF ratio to screen position
-        const rect = this.canvas.getBoundingClientRect();
-        const screenX = x * rect.width;
-        const screenY = y * rect.height;
-        
         this.laserPointer.style.display = 'block';
-        this.laserPointer.style.left = `${screenX}px`;
-        this.laserPointer.style.top = `${screenY}px`;
+        this.laserPointer.style.left = `${absX}px`;
+        this.laserPointer.style.top = `${absY}px`;
     },
     
     /**
@@ -326,30 +358,25 @@ const PdfViewer = {
     async applySyncState(state) {
         if (this.isTeacher) return;
         
-        // Change page if needed
-        if (state.page !== this.currentPage) {
-            await this.renderPage(state.page);
-        }
-        
-        // Apply zoom if different
+        // Apply zoom if different (re-renders all pages)
         if (Math.abs(state.scale - this.scale) > 0.01) {
             this.scale = state.scale;
-            await this.renderPage(this.currentPage);
+            await this.renderAllPages();
         }
         
         // Apply scroll position
         this.scrollWrapper.scrollTop = state.scrollTop;
         this.scrollWrapper.scrollLeft = state.scrollLeft;
+        
+        // Update current page display
+        this._updateCurrentPage();
     },
     
     /**
      * Show laser pointer at position (student)
-     * 
-     * x, y are ratios (0.0 to 1.0) of the PDF canvas dimensions
-     * This ensures the laser points to the same PDF content regardless
-     * of the student's zoom level or window size.
+     * absX, absY are absolute pixel positions within pagesContainer
      */
-    showLaser(x, y, active) {
+    showLaser(absX, absY, active) {
         if (!this.laserPointer) return;
         
         if (!active) {
@@ -357,14 +384,9 @@ const PdfViewer = {
             return;
         }
         
-        // Convert PDF ratio to screen position on student's canvas
-        const rect = this.canvas.getBoundingClientRect();
-        const screenX = x * rect.width;
-        const screenY = y * rect.height;
-        
         this.laserPointer.style.display = 'block';
-        this.laserPointer.style.left = `${screenX}px`;
-        this.laserPointer.style.top = `${screenY}px`;
+        this.laserPointer.style.left = `${absX}px`;
+        this.laserPointer.style.top = `${absY}px`;
     },
     
     /**

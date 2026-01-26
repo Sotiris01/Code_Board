@@ -27,25 +27,28 @@ Each language includes:
 - **Language Sync** — Language changes by teacher automatically sync to all students
 
 ### Teacher Tools
-- **PDF Sharing** — Load and share PDF documents (manuals, exercises) with students
+- **PDF Sharing** — Load and share PDF documents with continuous scrolling
 - **Markdown Sharing** — Load and share Markdown files with live rendering and sync
 - **Laser Pointer** — Point at specific parts of code, PDFs, or Markdown during explanations
 - **Auto-Scroll Sync** — Students automatically follow teacher's scroll position in PDF/Markdown
-- **Focus Mode** — Temporarily disable student input during demonstrations
+- **Student Focus Tracking** — See when students switch to other windows (red glowing indicator)
 - **Code Templates** — Quick-insert common code patterns and algorithms
 - **Breakpoints** — Set visual breakpoints to highlight important lines
 - **Scroll-to-Line** — Navigate all students to a specific line
+- **Smart Mode Toggle** — Click PDF/MD tab to load files; click again to load a new file
 
 ### Student Interaction
-- **Hand Raising** — Students can raise their hand to ask questions
 - **Reactions** — Quick emoji reactions for feedback (👍 Understood, ❓ Confused, 🔄 Repeat)
 - **Follow Mode** — Automatically follow teacher's view and selections
+- **Focus Indicator** — Teacher sees when you're not focused on the board
 
 ### Editor Features
 - **Syntax Highlighting** — Language-aware code coloring for all 4 languages
 - **Smart Insertion** — Auto-complete keywords and code structures
 - **Grid-Based Editor** — Clean, whiteboard-style code presentation
 - **File Browser** — Navigate and load exercises from the content library
+- **Continuous PDF Scrolling** — All PDF pages rendered vertically for smooth navigation
+- **User Presence** — See connected users with role-based icons and halo effects
 
 ## 🚀 Quick Start
 

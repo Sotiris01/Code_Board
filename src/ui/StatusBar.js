@@ -49,7 +49,6 @@ const StatusBar = {
         this.elements.sessionTimer = document.getElementById('session-timer');
         this.elements.ngrokLatency = document.getElementById('ngrok-latency');
         this.elements.ngrokConnections = document.getElementById('ngrok-connections');
-        this.elements.raisedHands = document.getElementById('raised-hands');
         
         // Initial update
         this.updateLineNumbers();
@@ -92,28 +91,6 @@ const StatusBar = {
         
         if (this.elements.languageDisplay) {
             this.elements.languageDisplay.textContent = this.currentLanguage;
-        }
-    },
-    
-    /**
-     * Update raised hands indicator with alert state
-     * @param {number} count - Number of raised hands
-     */
-    updateRaisedHands(count) {
-        if (this.elements.raisedHands) {
-            const countEl = this.elements.raisedHands.querySelector('#raised-hands-count');
-            if (countEl) {
-                countEl.textContent = count;
-            }
-            
-            // Show/hide based on count
-            if (count > 0) {
-                this.elements.raisedHands.style.display = 'inline-flex';
-                this.elements.raisedHands.classList.add('status-alert');
-            } else {
-                this.elements.raisedHands.style.display = 'none';
-                this.elements.raisedHands.classList.remove('status-alert');
-            }
         }
     },
     

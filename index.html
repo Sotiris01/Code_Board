@@ -104,61 +104,24 @@
             <div class="toolbar-center">
                 <!-- PDF Controls (hidden by default) -->
                 <div class="pdf-controls" id="pdf-controls" style="display: none;">
-                    <label class="btn btn-tool pdf-load-btn" title="Load PDF (Teacher only)">
-                        <span class="btn-icon">📂</span>
-                        <span class="btn-text">Open PDF</span>
-                        <input type="file" id="pdf-file-input" accept=".pdf" style="display: none;">
-                    </label>
-                    <div class="pdf-nav-controls">
-                        <button id="pdf-prev" class="btn btn-tool" title="Previous Page">
-                            <span class="btn-icon">◀</span>
-                        </button>
-                        <span id="pdf-page-display" class="pdf-page-display">-/-</span>
-                        <button id="pdf-next" class="btn btn-tool" title="Next Page">
-                            <span class="btn-icon">▶</span>
-                        </button>
-                    </div>
-                    <div class="pdf-zoom-controls">
-                        <button id="pdf-zoom-out" class="btn btn-tool" title="Zoom Out">
-                            <span class="btn-icon">➖</span>
-                        </button>
-                        <span id="pdf-zoom-display" class="pdf-zoom-display">150%</span>
-                        <button id="pdf-zoom-in" class="btn btn-tool" title="Zoom In">
-                            <span class="btn-icon">➕</span>
-                        </button>
-                    </div>
+                    <!-- Hidden file input triggered by mode button -->
+                    <input type="file" id="pdf-file-input" accept=".pdf" style="display: none;">
                 </div>
                 
-                <!-- Code Controls (shown by default) -->
+                <!-- Code Controls (shown by default, empty now) -->
                 <div class="code-controls" id="code-controls">
-                    <!-- Focus Mode Toggle (Teacher only) -->
-                    <button id="focus-mode-btn" class="btn btn-tool teacher-only" title="Focus Mode - Lock Students">
-                        <span class="btn-icon">👁️</span>
-                    </button>
                 </div>
                 
                 <!-- Markdown Controls (hidden by default) -->
                 <div class="md-controls" id="md-controls" style="display: none;">
-                    <label class="btn btn-tool md-load-btn teacher-only" title="Load Markdown (Teacher only)">
-                        <span class="btn-icon">📂</span>
-                        <span class="btn-text">Open MD</span>
-                        <input type="file" id="md-file-input" accept=".md,.txt" style="display: none;">
-                    </label>
+                    <!-- Hidden file input triggered by mode button -->
+                    <input type="file" id="md-file-input" accept=".md,.txt" style="display: none;">
                     <div class="md-scroll-controls">
                         <button id="md-scroll-top" class="btn btn-tool" title="Scroll to Top">
                             <span class="btn-icon">⬆️</span>
                         </button>
                         <button id="md-scroll-bottom" class="btn btn-tool" title="Scroll to Bottom">
                             <span class="btn-icon">⬇️</span>
-                        </button>
-                    </div>
-                    <div class="md-zoom-controls">
-                        <button id="md-zoom-out" class="btn btn-tool" title="Zoom Out">
-                            <span class="btn-icon">➖</span>
-                        </button>
-                        <span id="md-zoom-display" class="md-zoom-display">100%</span>
-                        <button id="md-zoom-in" class="btn btn-tool" title="Zoom In">
-                            <span class="btn-icon">➕</span>
                         </button>
                     </div>
                 </div>
@@ -349,10 +312,6 @@
                 <span id="cursor-position" class="status-item">Ln 1, Col 1</span>
                 <span class="status-item" id="network-upload" title="Upload per second">↑ 0 B/s</span>
                 <span class="status-item" id="network-download" title="Download per second">↓ 0 B/s</span>
-                <!-- Student Hand Raise Button -->
-                <button id="hand-raise-btn" class="hand-raise-btn student-only" title="Raise Your Hand">✋</button>
-                <!-- Teacher: Raised Hands Indicator -->
-                <span id="raised-hands" class="raised-hands teacher-only" title="Students with Raised Hands">✋ <span id="raised-hands-count">0</span></span>
             </div>
             <div class="status-center">
                 <!-- Session Timer -->

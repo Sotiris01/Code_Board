@@ -278,51 +278,10 @@ const StudentListPanel = {
 
 const HandRaiseAndReactions = {
     /**
-     * Initialize hand raise and reaction buttons
+     * Initialize reaction buttons
      * @param {boolean} isTeacher - Whether the current user is a teacher
      */
     init(isTeacher) {
-        // Hand raise button (students)
-        const handRaiseBtn = document.getElementById('hand-raise-btn');
-        if (handRaiseBtn && !isTeacher) {
-            handRaiseBtn.addEventListener('click', () => {
-                if (typeof Collaboration === 'undefined') return;
-                
-                const newState = !Collaboration.handRaised;
-                Collaboration.sendHandRaise(newState);
-                handRaiseBtn.classList.toggle('raised', newState);
-                handRaiseBtn.textContent = newState ? '🙋' : '✋';
-                handRaiseBtn.title = newState ? 'Lower your hand' : 'Raise your hand';
-            });
-        }
-        
-        // Raised hands indicator (teacher) - click to see who raised
-        const raisedHandsEl = document.getElementById('raised-hands');
-        if (raisedHandsEl && isTeacher) {
-            raisedHandsEl.addEventListener('click', () => {
-                if (typeof Collaboration === 'undefined') return;
-                
-                const names = Array.from(Collaboration.raisedHands.values());
-                if (names.length > 0) {
-                    showToast(`✋ Hands: ${names.join(', ')}`);
-                }
-            });
-        }
-        
-        // Focus mode button (teacher)
-        const focusModeBtn = document.getElementById('focus-mode-btn');
-        if (focusModeBtn && isTeacher) {
-            focusModeBtn.addEventListener('click', () => {
-                if (typeof Collaboration === 'undefined') return;
-                
-                const newState = !Collaboration.focusModeEnabled;
-                Collaboration.sendFocusMode(newState);
-                focusModeBtn.classList.toggle('active', newState);
-                focusModeBtn.title = newState ? 'Disable Focus Mode' : 'Focus Mode - Lock students';
-                showToast(newState ? '🔒 Focus Mode enabled' : '🔓 Focus Mode disabled');
-            });
-        }
-        
         // Reaction buttons (students)
         document.querySelectorAll('.reaction-btn').forEach(btn => {
             btn.addEventListener('click', () => {

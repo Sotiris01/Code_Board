@@ -1762,14 +1762,82 @@ body.is-teacher .activity-btn.teacher-only {
 .user-badge {
     font-size: 1.1rem;
     cursor: default;
+    transition: all 0.2s ease;
+}
+
+.user-badge.is-me {
+    font-size: 1.4rem;
+    position: relative;
+    animation: halo-pulse 2s ease-in-out infinite;
+}
+
+.user-badge.is-me::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 215, 0, 0.4) 0%, transparent 70%);
+    z-index: -1;
+    pointer-events: none;
+}
+
+@keyframes halo-pulse {
+    0%, 100% { filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.6)); }
+    50% { filter: drop-shadow(0 0 12px rgba(255, 215, 0, 0.9)); }
 }
 
 .user-badge.teacher {
     filter: drop-shadow(0 0 4px rgba(86, 156, 214, 0.5));
 }
 
+.user-badge.teacher.is-me {
+    animation: halo-pulse-teacher 2s ease-in-out infinite;
+}
+
+@keyframes halo-pulse-teacher {
+    0%, 100% { filter: drop-shadow(0 0 6px rgba(86, 156, 214, 0.7)); }
+    50% { filter: drop-shadow(0 0 14px rgba(86, 156, 214, 1)); }
+}
+
 .user-badge.student {
     filter: drop-shadow(0 0 4px rgba(78, 201, 176, 0.5));
+}
+
+.user-badge.student.is-me {
+    animation: halo-pulse-student 2s ease-in-out infinite;
+}
+
+@keyframes halo-pulse-student {
+    0%, 100% { filter: drop-shadow(0 0 6px rgba(78, 201, 176, 0.7)); }
+    50% { filter: drop-shadow(0 0 14px rgba(78, 201, 176, 1)); }
+}
+
+/* Unfocused student - intense red glow with shake */
+.user-badge.student.unfocused {
+    font-size: 1.3rem;
+    animation: unfocused-pulse 0.6s ease-in-out infinite, unfocused-shake 0.3s ease-in-out infinite;
+    background: rgba(255, 50, 50, 0.25);
+    border-radius: 50%;
+    padding: 4px;
+}
+
+@keyframes unfocused-pulse {
+    0%, 100% { 
+        filter: drop-shadow(0 0 8px rgba(255, 50, 50, 1)) drop-shadow(0 0 16px rgba(255, 0, 0, 0.8)); 
+    }
+    50% { 
+        filter: drop-shadow(0 0 14px rgba(255, 80, 80, 1)) drop-shadow(0 0 25px rgba(255, 0, 0, 1)); 
+    }
+}
+
+@keyframes unfocused-shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    75% { transform: translateX(2px); }
 }
 
 /* Remote Edit Indicator */
@@ -2278,7 +2346,6 @@ body.is-teacher .activity-btn.teacher-only {
     gap: 8px;
 }
 
-.pdf-page-display,
 .pdf-zoom-display {
     min-width: 50px;
     text-align: center;
@@ -2310,18 +2377,6 @@ body.is-teacher .activity-btn.teacher-only {
 .pdf-canvas {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
     background: white;
-}
-
-.pdf-page-info {
-    position: absolute;
-    bottom: 15px;
-    right: 15px;
-    background: rgba(0, 0, 0, 0.7);
-    color: white;
-    padding: 8px 15px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-family: var(--font-code);
 }
 
 /* ============================================
@@ -2655,59 +2710,6 @@ body.is-student .teacher-only {
 }
 
 /* ============================================
-   HAND RAISE FEATURE
-   ============================================ */
-
-.hand-raise-btn {
-    background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 4px;
-    padding: 2px 8px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    margin-left: 8px;
-    color: inherit;
-}
-
-.hand-raise-btn:hover {
-    background: rgba(255, 193, 7, 0.3);
-    border-color: #ffc107;
-}
-
-/* Active state - High contrast for visibility */
-.hand-raise-btn.raised {
-    background: #ffffff;
-    border-color: #ffffff;
-    color: #1e1e1e;
-    font-weight: bold;
-    animation: hand-pulse 1s ease-in-out infinite;
-    box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
-}
-
-@keyframes hand-pulse {
-    0%, 100% { transform: scale(1); box-shadow: 0 0 8px rgba(255, 255, 255, 0.5); }
-    50% { transform: scale(1.1); box-shadow: 0 0 12px rgba(255, 255, 255, 0.8); }
-}
-
-.raised-hands {
-    display: none;
-    align-items: center;
-    gap: 4px;
-    background: rgba(255, 193, 7, 0.2);
-    border: 1px solid #ffc107;
-    border-radius: 4px;
-    padding: 2px 8px;
-    font-size: 14px;
-    margin-left: 8px;
-    cursor: pointer;
-}
-
-.raised-hands:hover {
-    background: rgba(255, 193, 7, 0.3);
-}
-
-/* ============================================
    EMOJI REACTIONS
    ============================================ */
 
@@ -2762,73 +2764,6 @@ body.is-student .teacher-only {
     font-size: 12px;
     opacity: 0.8;
     font-family: monospace;
-}
-
-/* ============================================
-   FOCUS MODE OVERLAY
-   ============================================ */
-
-.focus-mode-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
-    z-index: 9999;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
-}
-
-.focus-mode-overlay.active {
-    display: flex;
-    animation: focus-fade-in 0.3s ease;
-}
-
-@keyframes focus-fade-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-.focus-mode-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    color: #fff;
-    text-align: center;
-    padding: 40px;
-    background: rgba(0, 0, 0, 0.8);
-    border-radius: 16px;
-    border: 2px solid var(--accent-color);
-}
-
-.focus-mode-content .focus-icon {
-    font-size: 64px;
-    animation: focus-pulse 2s ease-in-out infinite;
-}
-
-@keyframes focus-pulse {
-    0%, 100% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.1); opacity: 0.8; }
-}
-
-.focus-mode-content .focus-text {
-    font-size: 24px;
-    font-weight: bold;
-}
-
-.focus-mode-content .focus-hint {
-    font-size: 14px;
-    opacity: 0.7;
-}
-
-/* Focus mode button active state */
-#focus-mode-btn.active {
-    background: rgba(255, 193, 7, 0.3);
-    border-color: #ffc107;
 }
 
 /* Grid editor read-only state */

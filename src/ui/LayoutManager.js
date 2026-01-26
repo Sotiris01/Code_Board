@@ -26,19 +26,11 @@ const LayoutManager = {
         mdControls: null,
         // PDF specific
         pdfFileInput: null,
-        pdfPrev: null,
-        pdfNext: null,
         pdfPageDisplay: null,
-        pdfZoomIn: null,
-        pdfZoomOut: null,
-        pdfZoomDisplay: null,
         // Markdown specific
         mdFileInput: null,
         mdScrollTop: null,
         mdScrollBottom: null,
-        mdZoomIn: null,
-        mdZoomOut: null,
-        mdZoomDisplay: null,
         // Sidebar
         sidebarResizeHandle: null,
         keywordSidebar: null
@@ -93,18 +85,9 @@ const LayoutManager = {
         this.elements.codeControls = document.getElementById('code-controls');
         this.elements.mdControls = document.getElementById('md-controls');
         this.elements.pdfFileInput = document.getElementById('pdf-file-input');
-        this.elements.pdfPrev = document.getElementById('pdf-prev');
-        this.elements.pdfNext = document.getElementById('pdf-next');
-        this.elements.pdfPageDisplay = document.getElementById('pdf-page-display');
-        this.elements.pdfZoomIn = document.getElementById('pdf-zoom-in');
-        this.elements.pdfZoomOut = document.getElementById('pdf-zoom-out');
-        this.elements.pdfZoomDisplay = document.getElementById('pdf-zoom-display');
         this.elements.mdFileInput = document.getElementById('md-file-input');
         this.elements.mdScrollTop = document.getElementById('md-scroll-top');
         this.elements.mdScrollBottom = document.getElementById('md-scroll-bottom');
-        this.elements.mdZoomIn = document.getElementById('md-zoom-in');
-        this.elements.mdZoomOut = document.getElementById('md-zoom-out');
-        this.elements.mdZoomDisplay = document.getElementById('md-zoom-display');
         this.elements.sidebarResizeHandle = document.getElementById('sidebar-resize-handle');
         this.elements.keywordSidebar = document.getElementById('keyword-sidebar');
     },
@@ -124,6 +107,18 @@ const LayoutManager = {
         
         if (this.elements.modePdf) {
             this.elements.modePdf.addEventListener('click', () => {
+                if (this.isTeacher) {
+                    const hasPdf = typeof PdfViewer !== 'undefined' && PdfViewer.pdfDoc;
+                    const isCurrentMode = this.currentMode === 'pdf';
+                    
+                    // Open file browser if: no PDF loaded OR already on PDF mode (to load new file)
+                    if (!hasPdf || isCurrentMode) {
+                        if (this.elements.pdfFileInput) {
+                            this.elements.pdfFileInput.click();
+                        }
+                    }
+                }
+                
                 this.switchToMode('pdf');
                 if (this.isTeacher && typeof Collaboration !== 'undefined') {
                     Collaboration.sendModeChange('pdf');
@@ -133,6 +128,18 @@ const LayoutManager = {
         
         if (this.elements.modeMarkdown) {
             this.elements.modeMarkdown.addEventListener('click', () => {
+                if (this.isTeacher) {
+                    const hasMd = typeof MarkdownViewer !== 'undefined' && MarkdownViewer.hasContent();
+                    const isCurrentMode = this.currentMode === 'markdown';
+                    
+                    // Open file browser if: no MD loaded OR already on MD mode (to load new file)
+                    if (!hasMd || isCurrentMode) {
+                        if (this.elements.mdFileInput) {
+                            this.elements.mdFileInput.click();
+                        }
+                    }
+                }
+                
                 this.switchToMode('markdown');
                 if (this.isTeacher && typeof Collaboration !== 'undefined') {
                     Collaboration.sendModeChange('markdown');
@@ -193,10 +200,6 @@ const LayoutManager = {
             // Teacher-only: Navigation and zoom controls
             if (this.isTeacher) {
                 this._initPdfControls();
-            } else {
-                // Student: hide load button
-                const loadBtn = document.querySelector('.pdf-load-btn');
-                if (loadBtn) loadBtn.style.display = 'none';
             }
             
             console.log('📄 PDF Viewer ready');
@@ -240,10 +243,6 @@ const LayoutManager = {
             // Teacher-only: Navigation and zoom controls
             if (this.isTeacher) {
                 this._initMarkdownControls();
-            } else {
-                // Student: hide load button
-                const loadBtn = document.querySelector('.md-load-btn');
-                if (loadBtn) loadBtn.style.display = 'none';
             }
             
             console.log('📝 Markdown Viewer ready');
@@ -265,51 +264,13 @@ const LayoutManager = {
                 MarkdownViewer.scrollToBottom();
             });
         }
-        
-        if (this.elements.mdZoomIn) {
-            this.elements.mdZoomIn.addEventListener('click', () => {
-                MarkdownViewer.setZoom(MarkdownViewer.scale + 0.1);
-            });
-        }
-        
-        if (this.elements.mdZoomOut) {
-            this.elements.mdZoomOut.addEventListener('click', () => {
-                MarkdownViewer.setZoom(MarkdownViewer.scale - 0.1);
-            });
-        }
     },
     
     /**
      * Initialize PDF navigation controls (teacher only)
      */
     _initPdfControls() {
-        if (this.elements.pdfPrev) {
-            this.elements.pdfPrev.addEventListener('click', async () => {
-                await PdfViewer.prevPage();
-                this._updatePdfControls();
-            });
-        }
-        
-        if (this.elements.pdfNext) {
-            this.elements.pdfNext.addEventListener('click', async () => {
-                await PdfViewer.nextPage();
-                this._updatePdfControls();
-            });
-        }
-        
-        if (this.elements.pdfZoomIn) {
-            this.elements.pdfZoomIn.addEventListener('click', async () => {
-                await PdfViewer.setZoom(PdfViewer.scale + 0.25);
-                this._updatePdfControls();
-            });
-        }
-        
-        if (this.elements.pdfZoomOut) {
-            this.elements.pdfZoomOut.addEventListener('click', async () => {
-                await PdfViewer.setZoom(PdfViewer.scale - 0.25);
-                this._updatePdfControls();
-            });
-        }
+        // Zoom controls removed - use Ctrl+wheel to zoom
     },
     
     /**
@@ -319,9 +280,6 @@ const LayoutManager = {
         if (typeof PdfViewer !== 'undefined') {
             if (this.elements.pdfPageDisplay) {
                 this.elements.pdfPageDisplay.textContent = `${PdfViewer.currentPage}/${PdfViewer.totalPages || '-'}`;
-            }
-            if (this.elements.pdfZoomDisplay) {
-                this.elements.pdfZoomDisplay.textContent = `${Math.round(PdfViewer.scale * 100)}%`;
             }
         }
     },

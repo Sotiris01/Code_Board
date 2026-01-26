@@ -54,7 +54,6 @@ const Collaboration = {
     handRaised: false,
     raisedHands: new Map(), // userId -> userName
     reactions: new Map(), // reaction type -> Set of userIds
-    focusModeEnabled: false, // Focus mode state
     
     // Session timer
     sessionStartTime: null,
@@ -96,6 +95,9 @@ const Collaboration = {
         
         // Initialize offline detection
         this._initOfflineDetection();
+        
+        // Initialize window focus tracking (for students)
+        this._initFocusTracking();
         
         // Determine if teacher or student
         const urlParams = new URLSearchParams(window.location.search);
@@ -156,6 +158,51 @@ const Collaboration = {
             if (indicator) {
                 indicator.classList.remove('visible');
             }
+        }
+    },
+    
+    /**
+     * Initialize window focus tracking (students only)
+     * Notifies teacher when student switches to another window/tab
+     */
+    _initFocusTracking() {
+        // Track focus state
+        this._windowFocused = true;
+        
+        // Use both visibility API and focus/blur for better coverage
+        document.addEventListener('visibilitychange', () => {
+            const focused = !document.hidden;
+            if (this._windowFocused !== focused) {
+                this._windowFocused = focused;
+                this._sendFocusState(focused);
+            }
+        });
+        
+        window.addEventListener('focus', () => {
+            if (!this._windowFocused) {
+                this._windowFocused = true;
+                this._sendFocusState(true);
+            }
+        });
+        
+        window.addEventListener('blur', () => {
+            if (this._windowFocused) {
+                this._windowFocused = false;
+                this._sendFocusState(false);
+            }
+        });
+    },
+    
+    /**
+     * Send focus state to server (students only)
+     */
+    _sendFocusState(focused) {
+        if (this.myRole === 'student' && this.connected && this.ws.readyState === WebSocket.OPEN) {
+            this._send(JSON.stringify({
+                type: 'window_focus',
+                focused: focused
+            }));
+            console.log(focused ? '👁️ Window focused' : '👀 Window unfocused');
         }
     },
     
@@ -620,9 +667,11 @@ const Collaboration = {
                 this.handleClearReactions();
                 break;
             
-            case 'focus_mode':
-                // Teacher toggled focus mode (students receive)
-                this.handleFocusMode(message);
+            case 'window_focus':
+                // Student focus state changed (teacher receives)
+                if (this.myRole === 'teacher') {
+                    this.handleStudentFocus(message);
+                }
                 break;
             
             case 'breakpoints':
@@ -842,46 +891,6 @@ const Collaboration = {
     },
     
     /**
-     * Handle focus mode from teacher (student receives)
-     */
-    handleFocusMode(message) {
-        this.focusModeEnabled = message.enabled;
-        
-        // Show/hide focus mode overlay
-        let overlay = document.getElementById('focus-mode-overlay');
-        if (message.enabled) {
-            if (!overlay) {
-                overlay = document.createElement('div');
-                overlay.id = 'focus-mode-overlay';
-                overlay.className = 'focus-mode-overlay';
-                overlay.innerHTML = `
-                    <div class="focus-mode-content">
-                        <span class="focus-icon">👁️</span>
-                        <span class="focus-text">Focus Mode</span>
-                        <span class="focus-hint">Teacher is presenting - please pay attention</span>
-                    </div>
-                `;
-                document.body.appendChild(overlay);
-            }
-            overlay.classList.add('active');
-            
-            // Disable editor
-            if (typeof gridEditor !== 'undefined' && gridEditor) {
-                gridEditor.setReadOnly(true);
-            }
-        } else {
-            if (overlay) {
-                overlay.classList.remove('active');
-            }
-            
-            // Re-enable editor
-            if (typeof gridEditor !== 'undefined' && gridEditor) {
-                gridEditor.setReadOnly(false);
-            }
-        }
-    },
-    
-    /**
      * Handle breakpoints from teacher
      */
     handleBreakpoints(message) {
@@ -907,19 +916,6 @@ const Collaboration = {
             if (typeof showToast === 'function') {
                 showToast(`📍 Teacher scrolled to line ${lineNumber}`, 'info');
             }
-        }
-    },
-    
-    /**
-     * Toggle focus mode (teacher)
-     */
-    sendFocusMode(enabled) {
-        if (this.connected && this.ws.readyState === WebSocket.OPEN) {
-            this.focusModeEnabled = enabled;
-            this._send(JSON.stringify({
-                type: 'focus_mode',
-                enabled: enabled
-            }));
         }
     },
     
@@ -1152,6 +1148,18 @@ const Collaboration = {
     },
     
     /**
+     * Handle student focus state change (teacher only)
+     */
+    handleStudentFocus(message) {
+        // Update user's focus state in connectedUsers
+        const user = this.connectedUsers.find(u => u.id === message.userId);
+        if (user) {
+            user.focused = message.focused;
+            this.updateUserList();
+        }
+    },
+    
+    /**
      * Update connected users list
      */
     updateUserList() {
@@ -1171,8 +1179,10 @@ const Collaboration = {
         if (userListEl) {
             const users = this.connectedUsers.map(u => {
                 const icon = u.role === 'teacher' ? '👨‍🏫' : '👨‍🎓';
-                const isMe = u.id === this.myId ? ' (you)' : '';
-                return `<span class="user-badge ${u.role}" title="${u.name}">${icon}${isMe}</span>`;
+                const isMe = u.id === this.myId ? ' is-me' : '';
+                // Add unfocused class for students who are not focused (teacher view only)
+                const unfocused = (u.role === 'student' && u.focused === false) ? ' unfocused' : '';
+                return `<span class="user-badge ${u.role}${isMe}${unfocused}" title="${u.name}${unfocused ? ' (not focused)' : ''}">${icon}</span>`;
             }).join('');
             
             userListEl.innerHTML = users || '👤';

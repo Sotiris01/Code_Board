@@ -1130,15 +1130,22 @@ wss.on('connection', (ws, req) => {
                         }, ws);
                     }
                     break;
-                    
-                case 'focus_mode':
-                    // Teacher toggled focus mode - notify all students
-                    if (client.role === 'teacher') {
-                        console.log(`${message.enabled ? '🔒' : '🔓'} Focus mode ${message.enabled ? 'enabled' : 'disabled'}`);
-                        broadcast({
-                            type: 'focus_mode',
-                            enabled: message.enabled
-                        }, ws);
+                
+                case 'window_focus':
+                    // Student focus state changed - notify teacher
+                    if (client.role === 'student') {
+                        wss.clients.forEach(targetWs => {
+                            const targetClient = clients.get(targetWs);
+                            if (targetWs.readyState === WebSocket.OPEN && 
+                                targetClient && targetClient.role === 'teacher') {
+                                targetWs.send(JSON.stringify({
+                                    type: 'window_focus',
+                                    userId: client.id,
+                                    userName: client.name,
+                                    focused: message.focused
+                                }));
+                            }
+                        });
                     }
                     break;
                 
