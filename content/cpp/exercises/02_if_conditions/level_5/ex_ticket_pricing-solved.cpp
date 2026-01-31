@@ -1,0 +1,43 @@
+// Άσκηση: Τιμολόγηση Εισιτηρίων
+// Υπολόγισε την τιμή εισιτηρίου με βάση ηλικία και ημέρα
+
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    int age;
+    string day;
+    double basePrice = 10.0;
+    double finalPrice;
+    
+    cout << "=== Αγορά Εισιτηρίου ===" << endl;
+    cout << "Δώσε την ηλικία: ";
+    cin >> age;
+    cout << "Δώσε την ημέρα (weekday/weekend): ";
+    cin >> day;
+    
+    // Υπολογισμός τιμής βάσει ηλικίας
+    if (age < 12) {
+        finalPrice = basePrice * 0.5;  // 50% έκπτωση
+        cout << "Παιδικό εισιτήριο (50% έκπτωση)" << endl;
+    }
+    else if (age >= 65) {
+        finalPrice = basePrice * 0.7;  // 30% έκπτωση
+        cout << "Εισιτήριο ηλικιωμένου (30% έκπτωση)" << endl;
+    }
+    else {
+        finalPrice = basePrice;
+        cout << "Κανονικό εισιτήριο" << endl;
+    }
+    
+    // Επιπλέον χρέωση Σαββατοκύριακου
+    if (day == "weekend") {
+        finalPrice = finalPrice + 2.0;
+        cout << "Επιπλέον χρέωση Σ/Κ: +2€" << endl;
+    }
+    
+    cout << "Τελική τιμή: " << finalPrice << "€" << endl;
+    
+    return 0;
+}

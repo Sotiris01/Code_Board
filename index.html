@@ -264,40 +264,35 @@
                     <!-- Open Local File Panel (Teacher Only) -->
                     <div class="sidebar-panel" id="open-local-panel">
                         <div class="panel-header">
-                            <span class="panel-title">OPEN LOCAL FILE</span>
+                            <span class="panel-title">LOCAL FILES</span>
                         </div>
                         <div class="open-local-content" id="open-local-content">
-                            <p class="panel-description">Open a program file from your computer and load it onto the board.</p>
-                            
-                            <!-- File Picker Button -->
-                            <button class="open-file-btn" id="open-local-file-btn">
-                                <span class="btn-icon">📂</span>
-                                <span class="btn-text">Browse Files...</span>
-                            </button>
-                            <input type="file" id="local-file-input" accept=".gls,.glo,.py,.cpp,.c,.h,.hpp,.java,.txt" style="display: none;">
-                            
-                            <!-- Drag & Drop Zone -->
-                            <div class="drop-zone" id="local-drop-zone">
-                                <div class="drop-zone-content">
-                                    <span class="drop-icon">📄</span>
-                                    <span class="drop-text">Drop file here</span>
-                                </div>
+                            <!-- Initial state: Browse button -->
+                            <div id="local-browse-initial">
+                                <p class="panel-description">Open a folder from your computer to browse and load files.</p>
+                                
+                                <!-- Folder Picker Button -->
+                                <button class="open-file-btn" id="open-local-folder-btn">
+                                    <span class="btn-icon">📂</span>
+                                    <span class="btn-text">Open Folder...</span>
+                                </button>
+                                
+                                <!-- Or single file -->
+                                <button class="open-file-btn secondary" id="open-local-file-btn">
+                                    <span class="btn-icon">📄</span>
+                                    <span class="btn-text">Open Single File...</span>
+                                </button>
+                                <input type="file" id="local-file-input" accept=".gls,.glo,.py,.cpp,.c,.h,.hpp,.java,.txt" style="display: none;">
                             </div>
                             
-                            <!-- File Info (shown after selection) -->
-                            <div class="file-info" id="local-file-info" style="display: none;">
-                                <div class="file-info-header">
-                                    <span class="file-info-icon">📄</span>
-                                    <span class="file-info-name" id="local-file-name">filename.gls</span>
+                            <!-- After folder selected: File browser -->
+                            <div id="local-folder-browser" style="display: none;">
+                                <div class="local-folder-header">
+                                    <button id="local-folder-change" class="btn-icon-only" title="Change Folder">📂</button>
+                                    <span id="local-folder-name" class="local-folder-name">Folder</span>
                                 </div>
-                                <div class="file-info-meta">
-                                    <span id="local-file-size">0 KB</span>
-                                    <span class="separator">•</span>
-                                    <span id="local-file-lines">0 lines</span>
-                                </div>
-                                <button class="load-file-btn" id="load-local-file-btn">
-                                    <span>✅ Load to Board</span>
-                                </button>
+                                <div id="local-breadcrumb" class="file-breadcrumb"></div>
+                                <div id="local-file-list" class="file-list"></div>
                             </div>
                         </div>
                     </div>

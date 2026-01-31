@@ -2935,6 +2935,7 @@ body.is-student .teacher-only {
     display: flex;
     flex-direction: column;
     gap: 15px;
+    height: 100%;
 }
 
 .panel-description {
@@ -2971,6 +2972,65 @@ body.is-student .teacher-only {
 
 .open-file-btn .btn-icon {
     font-size: 1.2rem;
+}
+
+.open-file-btn.secondary {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+
+.open-file-btn.secondary:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+/* Local Folder Browser */
+#local-folder-browser {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    gap: 10px;
+}
+
+.local-folder-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.local-folder-name {
+    font-weight: 500;
+    color: var(--text-primary);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.btn-icon-only {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 1.1rem;
+    transition: background 0.2s;
+}
+
+.btn-icon-only:hover {
+    background: var(--bg-hover);
+}
+
+#local-breadcrumb {
+    font-size: 0.8rem;
+}
+
+#local-file-list {
+    flex: 1;
+    overflow-y: auto;
 }
 
 /* Drop Zone */
