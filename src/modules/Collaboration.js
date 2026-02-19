@@ -583,15 +583,15 @@ const Collaboration = {
                 break;
                 
             case 'highlight_selection':
-                // LEGACY: Show highlight selection (ONLY for students)
-                if (this.myRole === 'student' && message.userId !== this.myId) {
+                // LEGACY: Show highlight selection (teacher ↔ student)
+                if (message.userId !== this.myId) {
                     this.showRemoteHighlight(message);
                 }
                 break;
                 
             case 'highlight_tiles':
-                // NEW: Show tile-based highlight (ONLY for students)
-                if (this.myRole === 'student' && message.userId !== this.myId) {
+                // Show tile-based highlight (teacher ↔ student)
+                if (message.userId !== this.myId) {
                     this.showRemoteHighlightTiles(message);
                 }
                 break;
@@ -1413,8 +1413,8 @@ const Collaboration = {
     // ============================================
     
     /**
-     * Send code selection to server (Teacher → Student)
-     * NEW METHOD: Sends Array<{row,col}> for exact tile highlighting
+     * Send code selection to server (Teacher ↔ Student)
+     * Sends Array<{row,col}> for exact tile highlighting
      * Throttled to 100ms
      */
     sendHighlightTiles(tiles) {
@@ -1692,14 +1692,10 @@ const Collaboration = {
     },
     
     /**
-     * NEW: Show remote highlight tiles (from teacher) in GridEditor
-     * ONLY for students
+     * Show remote highlight tiles in GridEditor
+     * Bidirectional: teacher ↔ student
      */
     showRemoteHighlightTiles(data) {
-        if (this.myRole === 'teacher') {
-            return;
-        }
-        
         // If GridEditor exists, use it
         if (typeof gridEditor !== 'undefined' && gridEditor) {
             if (data.active && data.tiles && data.tiles.length > 0) {
@@ -1730,14 +1726,11 @@ const Collaboration = {
     },
     
     /**
-     * LEGACY: Show remote highlight (from teacher)
+     * LEGACY: Show remote highlight
      * Creates visual highlight overlay (not selection)
-     * ONLY for students - teacher should not call this function
+     * Bidirectional: teacher ↔ student
      */
     showRemoteHighlight(data) {
-        // Only students see highlights
-        if (this.myRole === 'teacher') return;
-        
 
         const editor = document.getElementById('code-editor');
         const highlightedCode = document.getElementById('highlighted-code');
@@ -1851,10 +1844,10 @@ function debounce(func, wait) {
     };
 }
 
-// Create debounced version of sendCodeUpdate
-const debouncedSendCode = debounce((code) => {
+// Send code updates immediately (no debounce)
+const sendCodeImmediate = (code) => {
     Collaboration.sendCodeUpdate(code);
-}, 150); // 150ms delay
+};
 
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', () => {
@@ -1872,7 +1865,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (editor) {
                 editor.addEventListener('input', () => {
                     if (!Collaboration.isUpdatingFromRemote) {
-                        debouncedSendCode(editor.value);
+                        sendCodeImmediate(editor.value);
                     }
                 });
                 

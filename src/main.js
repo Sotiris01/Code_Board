@@ -369,24 +369,14 @@ function init() {
         // Expose globally for FileBrowser and other modules
         window.gridEditor = gridEditor;
         
-        // Debounce timer for collaboration sync
-        let syncDebounceTimer = null;
-        const SYNC_DEBOUNCE_MS = 150;
-        
         // Set up GridEditor callbacks for collaboration
         gridEditor.onContentChange = (code) => {
             // Update line numbers immediately (UI feedback)
             StatusBar.updateLineNumbers();
             
-            // Debounce collaboration sync to reduce WebSocket flooding
+            // Send every change immediately to all connected clients
             if (typeof Collaboration !== 'undefined' && Collaboration.connected && !Collaboration.isUpdatingFromRemote) {
-                if (syncDebounceTimer) {
-                    clearTimeout(syncDebounceTimer);
-                }
-                syncDebounceTimer = setTimeout(() => {
-                    Collaboration.sendCodeUpdate(code);
-                    syncDebounceTimer = null;
-                }, SYNC_DEBOUNCE_MS);
+                Collaboration.sendCodeUpdate(code);
             }
         };
         
@@ -397,7 +387,8 @@ function init() {
                 StatusBar.updateCursor(gridEditor.cursor.row + 1, gridEditor.cursor.col + 1, selectionLen);
             }
             
-            if (typeof Collaboration !== 'undefined' && Collaboration.connected && Collaboration.myRole === 'teacher') {
+            // Send highlight tiles to all (teacher ↔ student)
+            if (typeof Collaboration !== 'undefined' && Collaboration.connected) {
                 Collaboration.sendHighlightTiles(tiles);
             }
         };
