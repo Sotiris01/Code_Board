@@ -68,12 +68,70 @@ const Collaboration = {
     _throttledSendPdfLaser: null,
     _throttledSendHighlightTiles: null,
     
+    // Phase 8.4 — last known server seq for the code state. Used on
+    // reconnect to ask "anything newer than N?".
+    _lastSeq: 0,
+
     // Network traffic tracking
     _bytesSentThisSecond: 0,
     _bytesReceivedThisSecond: 0,
     _bytesSentPerSec: 0,
     _bytesReceivedPerSec: 0,
     _trafficInterval: null,
+
+    // Phase 8.3 — offline outbox. Queues outbound messages while the
+    // socket is down so a brief Wi-Fi blip doesn't lose a student's typing.
+    _outboxKey: 'aepp-collab-outbox',
+    _outboxMaxBytes: 256 * 1024, // 256 KB safety cap
+    _enqueueable: new Set([
+        'code_update', 'cursor_update', 'highlight_update',
+        'hand_raise', 'reaction', 'pdf_sync', 'markdown_sync',
+        'scroll_sync', 'template_loaded'
+    ]),
+
+    _readOutbox() {
+        try { return JSON.parse(localStorage.getItem(this._outboxKey) || '[]'); }
+        catch { return []; }
+    },
+    _writeOutbox(items) {
+        try {
+            let json = JSON.stringify(items);
+            // Drop oldest entries if cap exceeded.
+            while (json.length > this._outboxMaxBytes && items.length > 1) {
+                items.shift();
+                json = JSON.stringify(items);
+            }
+            localStorage.setItem(this._outboxKey, json);
+        } catch {}
+    },
+    _queueOffline(rawData) {
+        try {
+            const msg = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+            if (!msg || !this._enqueueable.has(msg.type)) return;
+            // For chatty per-keystroke ops only keep the latest per type.
+            const items = this._readOutbox().filter(m => {
+                if (msg.type === 'code_update' && m.type === 'code_update') return false;
+                if (msg.type === 'cursor_update' && m.type === 'cursor_update') return false;
+                if (msg.type === 'highlight_update' && m.type === 'highlight_update') return false;
+                return true;
+            });
+            items.push(msg);
+            this._writeOutbox(items);
+        } catch {}
+    },
+    _flushOutbox() {
+        const items = this._readOutbox();
+        if (!items.length || !this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+        for (const msg of items) {
+            try {
+                const json = JSON.stringify(msg);
+                this._trackSend(json);
+                this.ws.send(json);
+            } catch {}
+        }
+        try { localStorage.removeItem(this._outboxKey); } catch {}
+        if (items.length) console.log(`📤 Flushed ${items.length} queued message(s) from outbox`);
+    },
     
     /**
      * Initialize WebSocket connection
@@ -335,6 +393,9 @@ const Collaboration = {
         if (this.ws && this.ws.readyState === WebSocket.OPEN) {
             this._trackSend(data);
             this.ws.send(data);
+        } else {
+            // Phase 8.3 — queue while offline; flushed on next open.
+            this._queueOffline(data);
         }
     },
     
@@ -355,6 +416,16 @@ const Collaboration = {
                 
                 // Cleanup any remnants from previous sessions
                 this.cleanupRemoteElements();
+
+                // Phase 8.3 — drain anything queued while we were offline.
+                this._flushOutbox();
+
+                // Phase 8.4 — after reconnect ask for any missed updates.
+                if (this._lastSeq > 0) {
+                    try {
+                        this.ws.send(JSON.stringify({ type: 'request_since', seq: this._lastSeq }));
+                    } catch {}
+                }
             };
             
             this.ws.onmessage = (event) => {
@@ -461,6 +532,11 @@ const Collaboration = {
                 this.myId = message.yourId;
                 this.myRole = message.yourRole;
                 this.connectedUsers = message.connectedUsers;
+                if (message.state && typeof message.state.seq === 'number') {
+                    this._lastSeq = message.state.seq;
+                }
+                // Phase 9.6: expose role on <body> so mobile read-only CSS can target students.
+                try { document.body.dataset.role = this.myRole || ''; } catch { /* ignore */ }
                 
                 // Hide lobby if it was showing
                 if (typeof LobbyManager !== 'undefined') {
@@ -527,6 +603,11 @@ const Collaboration = {
                         }
                     }
                 }
+
+                // Apply teacher's current theme on join (any role) without persisting/rebroadcasting.
+                if (message.state && message.state.theme && typeof ThemeManager !== 'undefined') {
+                    ThemeManager.apply(message.state.theme, { persist: false, broadcast: false });
+                }
                 
                 this.updateUserList();
                 console.log(`📍 Connected as ${message.yourRole} (ID: ${message.yourId})`);
@@ -535,6 +616,7 @@ const Collaboration = {
                 
             case 'code_update':
                 // Another user changed the code
+                if (typeof message.seq === 'number') this._lastSeq = message.seq;
                 if (!this.isUpdatingFromRemote) {
                     this.updateEditorContent(message.code);
                     // Update line numbers
@@ -554,6 +636,19 @@ const Collaboration = {
                 }
                 break;
                 
+            // Phase 8.4 — server response to request_since after reconnect.
+            case 'state_sync':
+                if (typeof message.seq === 'number') this._lastSeq = message.seq;
+                if (message.upToDate) {
+                    console.log('🔁 state_sync: already up to date at seq', message.seq);
+                } else {
+                    console.log(`🔁 state_sync: catching up to seq ${message.seq}`);
+                    if (typeof message.code === 'string') {
+                        this.updateEditorContent(message.code);
+                    }
+                }
+                break;
+
             case 'template_loaded':
                 this.updateEditorContent(message.code);
                 // Update line numbers
@@ -692,6 +787,13 @@ const Collaboration = {
                     showToast(`🌐 Language: ${message.language.toUpperCase()}`, 'info');
                 }
                 break;
+
+            case 'theme_change':
+                // Teacher changed theme — all clients follow (no rebroadcast).
+                if (typeof ThemeManager !== 'undefined') {
+                    ThemeManager.apply(message.theme, { persist: false, broadcast: false });
+                }
+                break;
             
             case 'folder_shared':
                 // Someone shared a file (all clients receive)
@@ -720,7 +822,10 @@ const Collaboration = {
      */
     handleHandRaise(message) {
         if (message.raised) {
-            this.raisedHands.set(message.userId, message.userName);
+            this.raisedHands.set(message.userId, {
+                name: message.userName,
+                note: message.note || ''
+            });
         } else {
             this.raisedHands.delete(message.userId);
         }
@@ -760,10 +865,14 @@ const Collaboration = {
             countEl.textContent = count;
             container.style.display = count > 0 ? 'inline-flex' : 'none';
             
-            // Build tooltip with names
+            // Build tooltip with names (and notes — Phase 9.2)
             if (count > 0) {
-                const names = Array.from(this.raisedHands.values()).join(', ');
-                container.title = `Raised hands: ${names}`;
+                const lines = [];
+                for (const [, info] of this.raisedHands) {
+                    const entry = typeof info === 'string' ? { name: info, note: '' } : info;
+                    lines.push(entry.note ? `${entry.name}: ${entry.note}` : entry.name);
+                }
+                container.title = `Raised hands:\n` + lines.join('\n');
             }
         }
     },
@@ -788,14 +897,15 @@ const Collaboration = {
     },
     
     /**
-     * Send hand raise (student)
+     * Send hand raise (student) — Phase 9.2 supports an optional short note.
      */
-    sendHandRaise(raised) {
+    sendHandRaise(raised, note) {
         if (this.connected && this.ws.readyState === WebSocket.OPEN) {
             this.handRaised = raised;
             this._send(JSON.stringify({
                 type: 'hand_raise',
-                raised: raised
+                raised: raised,
+                note: typeof note === 'string' ? note.slice(0, 280) : ''
             }));
         }
     },
@@ -841,6 +951,17 @@ const Collaboration = {
                 type: 'language_change',
                 language: language
             }));
+        }
+    },
+
+    /**
+     * Send theme change to server (teacher only) so students follow.
+     */
+    sendThemeChange(theme) {
+        if (this.myRole !== 'teacher') return;
+        if (this.connected && this.ws && this.ws.readyState === WebSocket.OPEN) {
+            console.log(`🎨 Teacher sending theme change: ${theme}`);
+            this._send(JSON.stringify({ type: 'theme_change', theme }));
         }
     },
     

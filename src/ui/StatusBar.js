@@ -156,9 +156,7 @@ const StatusBar = {
         const statsContainer = document.getElementById('ngrok-stats');
         if (!statsContainer) return;
         
-        statsContainer.style.display = 'flex';
-        
-        // Fetch stats immediately and then every 5 seconds
+        // Stays hidden until _fetchNgrokStats confirms a live tunnel.
         this._fetchNgrokStats();
         setInterval(() => this._fetchNgrokStats(), 5000);
     },
@@ -167,6 +165,7 @@ const StatusBar = {
      * Fetch ngrok stats from server API
      */
     async _fetchNgrokStats() {
+        const statsContainer = document.getElementById('ngrok-stats');
         if (!this.elements.ngrokLatency || !this.elements.ngrokConnections) return;
         
         try {
@@ -174,6 +173,7 @@ const StatusBar = {
             const data = await response.json();
             
             if (data.success) {
+                if (statsContainer) statsContainer.style.display = 'flex';
                 const latency = data.latency;
                 
                 // Update latency display
@@ -192,13 +192,12 @@ const StatusBar = {
                 // Update connections count
                 this.elements.ngrokConnections.textContent = `${data.connections || 0} 👥`;
             } else {
-                this.elements.ngrokLatency.textContent = '--ms';
-                this.elements.ngrokConnections.textContent = '? 👥';
+                // No tunnel active — hide the block instead of showing '?-ms'
+                if (statsContainer) statsContainer.style.display = 'none';
             }
         } catch (error) {
             console.warn('Failed to fetch ngrok stats:', error);
-            this.elements.ngrokLatency.textContent = '--ms';
-            this.elements.ngrokConnections.textContent = '? 👥';
+            if (statsContainer) statsContainer.style.display = 'none';
         }
     },
     

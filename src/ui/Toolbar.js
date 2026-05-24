@@ -230,6 +230,23 @@ const Toolbar = {
         
         // Show classroom controls
         this.elements.classroomControls.style.display = 'flex';
+
+        // Phase 6.B — show the Settings gear (teacher only) + wire it up.
+        const settingsBtn = document.getElementById('settings-btn');
+        if (settingsBtn) {
+            settingsBtn.style.display = '';
+            settingsBtn.addEventListener('click', () => {
+                if (window.SettingsDialog) window.SettingsDialog.toggle();
+            });
+        }
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && !e.shiftKey && !e.altKey && (e.key === ',' || e.code === 'Comma')) {
+                if (window.SettingsDialog) {
+                    e.preventDefault();
+                    window.SettingsDialog.toggle();
+                }
+            }
+        });
         
         // Bind classroom control events
         if (this.elements.copyCodeBtn) {

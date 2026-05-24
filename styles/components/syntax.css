@@ -1,0 +1,165 @@
+/* ============================================
+   Syntax highlighting (legacy + grid)
+   Generated from styles/legacy.css by scripts/split-css.ps1.
+   ============================================ */
+
+/* ============================================
+   SYNTAX HIGHLIGHTING CLASSES
+   ============================================ */
+.syntax-keyword {
+    color: #569cd6; /* Blue - structure keywords */
+    font-weight: 700;
+}
+
+.syntax-control {
+    color: #c586c0; /* Purple - control flow */
+    font-weight: 700;
+}
+
+.syntax-string {
+    color: #ce9178; /* Orange - strings */
+}
+
+.syntax-comment {
+    color: #6a9955; /* Green - comments */
+    font-style: italic;
+}
+
+.syntax-number {
+    color: #b5cea8; /* Light green - numbers */
+}
+
+.syntax-operator {
+    color: #d4d4d4; /* White - operators */
+    font-weight: 600;
+}
+
+.syntax-function {
+    color: #dcdcaa; /* Yellow - functions */
+    font-weight: 600;
+}
+
+.syntax-type {
+    color: #4ec9b0; /* Cyan - data types */
+    font-weight: 600;
+}
+
+.syntax-io {
+    color: #dcdcaa; /* Yellow - I/O */
+    font-weight: 700;
+}
+
+.syntax-logical {
+    color: #569cd6; /* Blue - logical operators */
+    font-weight: 700;
+}
+
+.syntax-bracket {
+    color: #ffd700; /* Gold - brackets */
+    font-weight: 700;
+}
+
+.syntax-variable {
+    color: #9cdcfe; /* Light blue - variables */
+}
+
+.syntax-param {
+    color: #9cdcfe; /* Light blue - parameters */
+}
+
+.syntax-punctuation {
+    color: #808080; /* Gray - punctuation */
+}
+
+/* Python-specific syntax classes */
+.syntax-decorator {
+    color: #dcdcaa; /* Yellow - decorators (@) */
+    font-weight: 600;
+}
+
+.syntax-self {
+    color: #569cd6; /* Blue - self reference */
+    font-style: italic;
+}
+
+.syntax-builtin {
+    color: #4ec9b0; /* Cyan - built-in functions */
+    font-weight: 600;
+}
+
+/* C++-specific syntax classes */
+.syntax-preprocessor {
+    color: #c586c0; /* Purple - preprocessor directives (#include, #define) */
+    font-weight: 600;
+}
+
+.syntax-type {
+    color: #4ec9b0; /* Cyan - type names (int, float, string, vector) */
+}
+
+.syntax-operator {
+    color: #d4d4d4; /* Light gray - operators */
+}
+
+
+/* ============================================
+   GRID EDITOR - SYNTAX HIGHLIGHTING CELLS
+   ============================================ */
+
+.grid-editor-cell.syntax-keyword {
+    color: #569cd6;
+    font-weight: 700;
+}
+
+.grid-editor-cell.syntax-control {
+    color: #c586c0;
+    font-weight: 700;
+}
+
+.grid-editor-cell.syntax-string {
+    color: #ce9178;
+}
+
+.grid-editor-cell.syntax-comment {
+    color: #6a9955;
+    font-style: italic;
+}
+
+.grid-editor-cell.syntax-number {
+    color: #b5cea8;
+}
+
+.grid-editor-cell.syntax-operator {
+    color: #d4d4d4;
+    font-weight: 600;
+}
+
+.grid-editor-cell.syntax-function {
+    color: #dcdcaa;
+    font-weight: 600;
+}
+
+.grid-editor-cell.syntax-type {
+    color: #4ec9b0;
+    font-weight: 600;
+}
+
+.grid-editor-cell.syntax-io {
+    color: #dcdcaa;
+    font-weight: 700;
+}
+
+.grid-editor-cell.syntax-logical {
+    color: #569cd6;
+    font-weight: 700;
+}
+
+.grid-editor-cell.syntax-bracket {
+    color: #ffd700;
+    font-weight: 700;
+}
+
+.grid-editor-cell.syntax-punctuation {
+    color: #808080;
+}
+

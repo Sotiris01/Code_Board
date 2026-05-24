@@ -1,0 +1,21 @@
+/* ============================================
+   Student/Teacher only elements
+   Generated from styles/legacy.css by scripts/split-css.ps1.
+   ============================================ */
+
+/* ============================================
+   STUDENT/TEACHER ONLY ELEMENTS
+   ============================================ */
+
+.student-only {
+    display: none;
+}
+
+body.is-student .student-only {
+    display: inline-flex;
+}
+
+body.is-student .teacher-only {
+    display: none !important;
+}
+

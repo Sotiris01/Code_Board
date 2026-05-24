@@ -55,8 +55,11 @@ class GridEditor {
         this.redoStack = [];
         this.maxUndoLevels = 50;
         this._lastUndoSaveTime = 0;
-        this._undoDebounceMs = 300; // Minimum ms between undo saves (groups rapid typing)
-        
+        this._undoDebounceMs = 200; // Coalescing window for character-level edits (Phase 4.5)
+
+        // Phase 4 — extension plugins (AutoPairs, AutoIndent, BlockComment, …)
+        this.plugins = [];
+
         // Drag selection state
         this.isDragging = false;
         
@@ -246,7 +249,13 @@ class GridEditor {
                     e.preventDefault();
                     e.stopPropagation();
                     if (e.shiftKey) {
-                        this.redo();
+                        // Phase 4.5 — Ctrl+Shift+Z is redo for teachers, but on a
+                        // read-only student it scrolls to the teacher's caret.
+                        if (this.readOnly && this.remoteCursor) {
+                            this.scrollToLine(this.remoteCursor.row + 1, true);
+                        } else {
+                            this.redo();
+                        }
                     } else {
                         this.undo();
                     }
@@ -491,6 +500,11 @@ class GridEditor {
     // ============================================
     
     _handleKeyDown(e) {
+        // Phase 4 plugin pipeline — first chance to swallow the key.
+        for (const p of this.plugins) {
+            if (p.handleKeyDown && p.handleKeyDown(this, e)) return;
+        }
+
         const key = e.key;
         const ctrl = e.ctrlKey || e.metaKey;
         const shift = e.shiftKey;
@@ -571,7 +585,13 @@ class GridEditor {
         this.hiddenInput.value = '';
         
         if (!text) return;
-        
+        if (this.readOnly) return;
+
+        // Phase 4 plugin pipeline (AutoPairs / AutoIndent etc.).
+        for (const p of this.plugins) {
+            if (p.handleInput && p.handleInput(this, text)) return;
+        }
+
         this._saveUndo();
         this._deleteSelection();
         this._insertText(text);
@@ -581,9 +601,15 @@ class GridEditor {
     
     _handlePaste(e) {
         e.preventDefault();
-        const text = e.clipboardData.getData('text/plain');
+        if (this.readOnly) return;
+        let text = e.clipboardData.getData('text/plain');
         if (!text) return;
-        
+
+        // Phase 4.8 — plugins may rewrite the pasted text (e.g. strip `>>> ` / `$ ` prefixes).
+        for (const p of this.plugins) {
+            if (p.transformPaste) text = p.transformPaste(this, text);
+        }
+
         this._saveUndo();
         this._deleteSelection();
         this._insertText(text);
@@ -751,6 +777,10 @@ class GridEditor {
     }
     
     _handleBackspace() {
+        if (this.readOnly) return;
+        for (const p of this.plugins) {
+            if (p.handleBackspace && p.handleBackspace(this)) return;
+        }
         this._saveUndo();
         
         if (this._deleteSelection()) {
@@ -803,6 +833,10 @@ class GridEditor {
     }
     
     _handleEnter() {
+        if (this.readOnly) return;
+        for (const p of this.plugins) {
+            if (p.handleEnter && p.handleEnter(this)) return;
+        }
         this._saveUndo();
         this._deleteSelection();
         
@@ -905,6 +939,9 @@ class GridEditor {
     }
     
     undo() {
+        // Phase 4.5 — students are read-only; their Ctrl+Z is a no-op,
+        // and Ctrl+Shift+Z is repurposed to "scroll to teacher's caret".
+        if (this.readOnly) return;
         if (this.undoStack.length === 0) return;
         
         // Save current state for redo
@@ -924,6 +961,7 @@ class GridEditor {
     }
     
     redo() {
+        if (this.readOnly) return;
         if (this.redoStack.length === 0) return;
         
         // Save current state for undo
@@ -1120,7 +1158,79 @@ class GridEditor {
     getValue() {
         return this.lines.join('\n');
     }
-    
+
+    // ----- Phase 4 plugin helpers ----------------------------------------
+
+    /** Register an extension plugin (AutoPairs, AutoIndent, BlockComment, …). */
+    use(plugin) {
+        if (!plugin) return;
+        this.plugins.push(plugin);
+        if (typeof plugin.init === 'function') plugin.init(this);
+    }
+
+    /** Insert text at the current cursor with full undo + notify pipeline. */
+    insertTextAtCursor(text) {
+        this._saveUndo();
+        this._deleteSelection();
+        this._insertText(text);
+        this.render();
+        this._notifyContentChange();
+    }
+
+    /**
+     * Replace a contiguous range with new text. `from`/`to` are
+     * `{row, col}` and `to` is exclusive. Cursor lands at the end of
+     * the inserted text. Used by AutoPairs (backspace pair-delete),
+     * BlockComment, AutoIndent and FindReplace.
+     */
+    replaceRange(from, to, newText) {
+        this._saveUndo();
+        // Build a single string of the prefix + newText + suffix on the affected rows.
+        const startRow = from.row, endRow = to.row;
+        const startLine = this.lines[startRow] || '';
+        const endLine = this.lines[endRow] || '';
+        const before = startLine.slice(0, from.col);
+        const after = endLine.slice(to.col);
+        const merged = (before + newText + after).split('\n');
+        this.lines.splice(startRow, endRow - startRow + 1, ...merged);
+        // Place cursor at end of inserted text.
+        const lastInsertedLen = (newText.split('\n').pop() || '').length;
+        const cursorRow = startRow + merged.length - 1;
+        const cursorCol = merged.length === 1 ? before.length + newText.length : lastInsertedLen;
+        this.cursor = { row: cursorRow, col: cursorCol };
+        this.selection.clear();
+        this.selectionAnchor = null;
+        this.render();
+        this._notifyContentChange();
+    }
+
+    /** Replace a full range of whole lines with `newLines` (array of strings). */
+    replaceLines(startRow, endRow, newLines) {
+        this._saveUndo();
+        this.lines.splice(startRow, endRow - startRow + 1, ...newLines);
+        // Clamp cursor.
+        this.cursor.row = Math.min(this.cursor.row, this.lines.length - 1);
+        this.cursor.col = Math.min(this.cursor.col, this.lines[this.cursor.row].length);
+        this.selection.clear();
+        this.selectionAnchor = null;
+        this.render();
+        this._notifyContentChange();
+    }
+
+    /** Current configured indent unit honouring softTabs. */
+    getIndentUnit() {
+        if (this.options.useTabs) return '\t';
+        return ' '.repeat(this.options.tabSize || 3);
+    }
+
+    setTabSize(n) {
+        this.options.tabSize = Math.max(1, Math.min(8, n | 0));
+    }
+
+    setUseTabs(useTabs) {
+        this.options.useTabs = !!useTabs;
+    }
+
     setValue(text, options = {}) {
         // Save undo state IMMEDIATELY (no debounce) for setValue calls
         // This is important for remote updates so Ctrl+Z works correctly

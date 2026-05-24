@@ -1,0 +1,41 @@
+/* ============================================
+   Toast notifications
+   Generated from styles/legacy.css by scripts/split-css.ps1.
+   ============================================ */
+
+/* ============================================
+   TOAST NOTIFICATION
+   ============================================ */
+.toast {
+    position: fixed;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    font-size: 0.95rem;
+    z-index: 1000;
+    opacity: 1;
+    transition: opacity var(--transition-normal), transform var(--transition-normal);
+}
+
+.toast.hidden {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+    pointer-events: none;
+}
+
+.toast.success {
+    border-color: var(--accent-green);
+    background-color: rgba(78, 201, 176, 0.15);
+}
+
+.toast.error {
+    border-color: var(--accent-red);
+    background-color: rgba(244, 71, 71, 0.15);
+}
+

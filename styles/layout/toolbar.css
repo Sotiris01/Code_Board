@@ -1,0 +1,352 @@
+/* ============================================
+   Toolbar + mode toggle + language selector
+   Generated from styles/legacy.css by scripts/split-css.ps1.
+   ============================================ */
+
+/* ============================================
+   TOOLBAR
+   ============================================ */
+.toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: var(--toolbar-height);
+    padding: 0 20px;
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.app-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+}
+
+@media (max-width: 1100px) {
+    .app-title .app-title-text {
+        display: none;
+    }
+}
+
+.subtitle {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.toolbar-center {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+/* Template Selector Dropdown */
+.template-selector {
+    display: flex;
+    align-items: center;
+}
+
+.template-dropdown {
+    font-family: var(--font-main);
+    font-size: 0.9rem;
+    padding: 8px 12px;
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    min-width: 180px;
+    transition: all 0.2s ease;
+}
+
+.template-dropdown:hover {
+    border-color: var(--accent-blue);
+    background-color: var(--bg-secondary);
+}
+
+.template-dropdown:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px rgba(78, 156, 246, 0.2);
+}
+
+.template-dropdown option {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    padding: 8px;
+}
+
+.template-dropdown optgroup {
+    background-color: var(--bg-primary);
+    color: var(--accent-blue);
+    font-weight: 600;
+    padding: 8px;
+}
+
+/* Exercise dropdown with different accent color */
+.exercise-dropdown {
+    border-color: var(--accent-purple);
+}
+
+.exercise-dropdown:hover {
+    border-color: var(--accent-yellow);
+    background-color: var(--bg-secondary);
+}
+
+.exercise-dropdown:focus {
+    border-color: var(--accent-yellow);
+    box-shadow: 0 0 0 3px rgba(229, 192, 123, 0.2);
+}
+
+/* Algorithm dropdown with book accent color */
+.algorithm-dropdown {
+    border-color: var(--accent-cyan);
+}
+
+.algorithm-dropdown:hover {
+    border-color: var(--accent-green);
+    background-color: var(--bg-secondary);
+}
+
+.algorithm-dropdown:focus {
+    border-color: var(--accent-green);
+    box-shadow: 0 0 0 3px rgba(152, 195, 121, 0.2);
+}
+
+.toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Buttons */
+.btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.btn:hover {
+    background-color: #3c3c3c;
+    border-color: #505050;
+}
+
+.btn:active {
+    transform: scale(0.97);
+}
+
+.btn-tool {
+    padding: 6px 10px;
+    font-family: var(--font-code);
+    font-weight: 600;
+}
+
+.btn-tool .btn-icon {
+    font-size: 0.95rem;
+}
+
+.btn-action {
+    background-color: #0e639c;
+    border-color: #1177bb;
+    color: white;
+}
+
+.btn-action:hover {
+    background-color: #1177bb;
+    border-color: #22aaff;
+}
+
+.btn-danger {
+    background-color: #5a1d1d;
+    border-color: #8b2d2d;
+    color: #f88;
+}
+
+.btn-danger:hover {
+    background-color: #8b2d2d;
+    border-color: #cc4444;
+}
+
+.btn-icon {
+    font-size: 1.1rem;
+}
+
+/* Icon-only button style */
+.btn-icon-only {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.btn-icon-only:hover {
+    background: var(--accent-blue);
+    border-color: var(--accent-blue);
+}
+
+.btn-icon-only .btn-icon {
+    font-size: 1.3rem;
+}
+
+/* Theme toggle animation */
+.theme-icon {
+    transition: transform 0.3s ease;
+}
+
+
+/* ============================================
+   MODE TOGGLE BUTTONS
+   ============================================ */
+.mode-toggle {
+    display: flex;
+    gap: 4px;
+    margin-left: 20px;
+    background: var(--bg-tertiary);
+    padding: 4px;
+    border-radius: 8px;
+}
+
+.btn-mode {
+    background: transparent;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-mode:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.btn-mode.active {
+    background: var(--accent-blue);
+    color: white;
+}
+
+.btn-mode .btn-icon {
+    font-size: 14px;
+}
+
+.btn-mode .btn-text {
+    font-size: 12px;
+    font-weight: 500;
+}
+
+
+/* ============================================
+   LANGUAGE SELECTOR
+   ============================================ */
+.language-selector-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 20px;
+    padding: 4px 12px;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+}
+
+.language-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.language-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    display: inline-block;
+}
+
+.language-selector {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    min-width: 100px;
+}
+
+.language-selector:hover {
+    border-color: var(--accent-blue);
+}
+
+.language-selector:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.language-selector option {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    padding: 8px;
+}
+
+
+/* ============================================
+   Phase 3.1 — overflow-aware two-row toolbar
+   When width is tight the toolbar wraps onto a second row instead of
+   clipping. min-height keeps the legacy single-row height when nothing
+   wraps. .toolbar-right is pushed to its own row below ~1100px.
+   ============================================ */
+.toolbar {
+    flex-wrap: wrap;
+    row-gap: 6px;
+    column-gap: 12px;
+    min-height: var(--toolbar-height);
+    height: auto;
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+.toolbar-left,
+.toolbar-center,
+.toolbar-right {
+    flex-wrap: wrap;
+    row-gap: 6px;
+}
+
+@media (max-width: 1100px) {
+    .toolbar { padding-left: 12px; padding-right: 12px; }
+    .toolbar-right { flex-basis: 100%; justify-content: flex-end; }
+}

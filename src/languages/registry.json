@@ -1,0 +1,49 @@
+{
+  "$schema": "Source of truth for all installed language plugins. Read by both the client (LanguageRegistry) and the server (allowed file extensions). To add a language, run `npm run new:lang -- <id>`.",
+  "languages": [
+    {
+      "id": "glossa",
+      "label": "ΓΛΩΣΣΑ",
+      "namespace": "Glossa",
+      "fileExtensions": [".gls", ".glo"],
+      "icon": "glossa.svg",
+      "commentSyntax": { "line": "!", "block": null },
+      "indentTriggers": ["ΑΡΧΗ", "ΑΝ", "ΓΙΑ", "ΟΣΟ", "ΕΠΙΛΕΞΕ", "ΣΥΝΑΡΤΗΣΗ", "ΔΙΑΔΙΚΑΣΙΑ", "ΑΛΛΙΩΣ"],
+      "dedentTriggers": ["ΤΕΛΟΣ_"],
+      "autoPairs": { "(": ")", "[": "]", "\"": "\"", "'": "'" }
+    },
+    {
+      "id": "python",
+      "label": "Python",
+      "namespace": "Python",
+      "fileExtensions": [".py"],
+      "icon": "python.svg",
+      "commentSyntax": { "line": "#", "block": ["\"\"\"", "\"\"\""] },
+      "indentTriggers": [":"],
+      "dedentTriggers": [],
+      "autoPairs": { "(": ")", "[": "]", "{": "}", "\"": "\"", "'": "'", "`": "`" }
+    },
+    {
+      "id": "cpp",
+      "label": "C++",
+      "namespace": "Cpp",
+      "fileExtensions": [".cpp", ".h", ".hpp", ".c"],
+      "icon": "cpp.svg",
+      "commentSyntax": { "line": "//", "block": ["/*", "*/"] },
+      "indentTriggers": ["{"],
+      "dedentTriggers": ["}"],
+      "autoPairs": { "(": ")", "[": "]", "{": "}", "\"": "\"", "'": "'" }
+    },
+    {
+      "id": "java",
+      "label": "Java",
+      "namespace": "Java",
+      "fileExtensions": [".java"],
+      "icon": "java.svg",
+      "commentSyntax": { "line": "//", "block": ["/*", "*/"] },
+      "indentTriggers": ["{"],
+      "dedentTriggers": ["}"],
+      "autoPairs": { "(": ")", "[": "]", "{": "}", "\"": "\"", "'": "'" }
+    }
+  ]
+}

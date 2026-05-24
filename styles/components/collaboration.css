@@ -1,0 +1,201 @@
+/* ============================================
+   Collaboration cursors + remote highlight
+   Generated from styles/legacy.css by scripts/split-css.ps1.
+   ============================================ */
+
+/* ============================================
+   COLLABORATION STYLES
+   ============================================ */
+
+/* Connection Status */
+.collab-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    margin-left: 10px;
+}
+
+.collab-status.connected {
+    color: var(--accent-green);
+}
+
+.collab-status.disconnected {
+    color: #f44747;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.status-dot.connected {
+    background-color: var(--accent-green);
+    box-shadow: 0 0 6px var(--accent-green);
+    animation: pulse 2s infinite;
+}
+
+.status-dot.disconnected {
+    background-color: #f44747;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* User List */
+.user-list {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px;
+    background-color: var(--bg-tertiary);
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+
+.user-badge {
+    font-size: 1.1rem;
+    cursor: default;
+    transition: all 0.2s ease;
+}
+
+.user-badge.is-me {
+    font-size: 1.4rem;
+    position: relative;
+    animation: halo-pulse 2s ease-in-out infinite;
+}
+
+.user-badge.is-me::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 215, 0, 0.4) 0%, transparent 70%);
+    z-index: -1;
+    pointer-events: none;
+}
+
+@keyframes halo-pulse {
+    0%, 100% { filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.6)); }
+    50% { filter: drop-shadow(0 0 12px rgba(255, 215, 0, 0.9)); }
+}
+
+.user-badge.teacher {
+    filter: drop-shadow(0 0 4px rgba(86, 156, 214, 0.5));
+}
+
+.user-badge.teacher.is-me {
+    animation: halo-pulse-teacher 2s ease-in-out infinite;
+}
+
+@keyframes halo-pulse-teacher {
+    0%, 100% { filter: drop-shadow(0 0 6px rgba(86, 156, 214, 0.7)); }
+    50% { filter: drop-shadow(0 0 14px rgba(86, 156, 214, 1)); }
+}
+
+.user-badge.student {
+    filter: drop-shadow(0 0 4px rgba(78, 201, 176, 0.5));
+}
+
+.user-badge.student.is-me {
+    animation: halo-pulse-student 2s ease-in-out infinite;
+}
+
+@keyframes halo-pulse-student {
+    0%, 100% { filter: drop-shadow(0 0 6px rgba(78, 201, 176, 0.7)); }
+    50% { filter: drop-shadow(0 0 14px rgba(78, 201, 176, 1)); }
+}
+
+/* Unfocused student - intense red glow with shake */
+.user-badge.student.unfocused {
+    font-size: 1.3rem;
+    animation: unfocused-pulse 0.6s ease-in-out infinite, unfocused-shake 0.3s ease-in-out infinite;
+    background: rgba(255, 50, 50, 0.25);
+    border-radius: 50%;
+    padding: 4px;
+}
+
+@keyframes unfocused-pulse {
+    0%, 100% { 
+        filter: drop-shadow(0 0 8px rgba(255, 50, 50, 1)) drop-shadow(0 0 16px rgba(255, 0, 0, 0.8)); 
+    }
+    50% { 
+        filter: drop-shadow(0 0 14px rgba(255, 80, 80, 1)) drop-shadow(0 0 25px rgba(255, 0, 0, 1)); 
+    }
+}
+
+@keyframes unfocused-shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    75% { transform: translateX(2px); }
+}
+
+/* Remote Edit Indicator */
+.remote-edit-indicator {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 6px 12px;
+    background-color: rgba(78, 156, 246, 0.9);
+    color: white;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+    z-index: 100;
+    pointer-events: none;
+}
+
+.remote-edit-indicator.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+
+/* ============================================
+   VISUAL CURSOR - Student Position in Editor
+   ============================================ */
+
+.visual-cursor {
+    position: absolute;
+    width: 2px;
+    height: 20px;
+    background-color: #ff6b6b;
+    pointer-events: none;
+    z-index: 100;
+    display: none;
+}
+
+
+/* ============================================
+   REMOTE HIGHLIGHT - Teacher Selection on Student
+   ============================================ */
+
+.remote-highlight-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 50;
+    overflow: hidden;
+}
+
+.remote-highlight {
+    position: absolute;
+    background-color: rgba(255, 213, 0, 0.4);
+    border-radius: 2px;
+    pointer-events: none;
+}

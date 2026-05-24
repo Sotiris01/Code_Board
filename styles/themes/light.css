@@ -1,0 +1,47 @@
+/* ============================================
+   Light theme token overrides
+   Generated from styles/legacy.css by scripts/split-css.ps1.
+   ============================================ */
+
+:root[data-theme="light"] {
+    --bg-primary: #f5f5f5;
+    --bg-secondary: #e8e8e8;
+    --bg-tertiary: #dcdcdc;
+    --bg-editor: #ffffff;
+    --bg-line-numbers: #f0f0f0;
+    
+    /* Activity Bar & Sidebar - Light */
+    --bg-activity-bar: #2c2c2c;
+    --bg-sidebar: #f3f3f3;
+    --bg-sidebar-header: #e8e8e8;
+    --activity-icon-active: #ffffff;
+    --activity-icon-inactive: #858585;
+    --activity-indicator: #007acc;
+    
+    /* Status Bar - Light */
+    --bg-statusbar: #007acc;
+    --text-statusbar: #ffffff;
+    
+    --text-primary: #1e1e1e;
+    --text-secondary: #6e6e6e;
+    --text-muted: #999999;
+    
+    --accent-blue: #0066cc;
+    --accent-purple: #a626a4;
+    --accent-green: #166e6e;
+    --accent-orange: #986801;
+    --accent-yellow: #4078f2;
+    --accent-red: #ca1243;
+    
+    --border-color: #d0d0d0;
+    --highlight-line: #e8f2fc;
+    
+    /* Syntax Highlighting Colors - Light Theme */
+    --syntax-keyword: #0066cc;
+    --syntax-control: #a626a4;
+    --syntax-string: #986801;
+    --syntax-comment: #6a8759;
+    --syntax-number: #2aa889;
+    --syntax-operator: #1e1e1e;
+    --syntax-function: #4078f2;
+}

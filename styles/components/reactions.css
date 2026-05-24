@@ -1,0 +1,52 @@
+/* ============================================
+   Emoji reactions
+   Generated from styles/legacy.css by scripts/split-css.ps1.
+   ============================================ */
+
+/* ============================================
+   EMOJI REACTIONS
+   ============================================ */
+
+.emoji-reactions {
+    display: inline-flex;
+    gap: 4px;
+    margin-right: 8px;
+}
+
+.reaction-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    opacity: 0.7;
+}
+
+.reaction-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.reaction-btn.active {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--accent-color);
+}
+
+.reaction-counts {
+    display: inline-flex;
+    gap: 8px;
+    margin-right: 8px;
+    font-size: 12px;
+}
+
+.reaction-count {
+    opacity: 0.6;
+}
+
+.reaction-count.has-count {
+    opacity: 1;
+}
+

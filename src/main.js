@@ -21,9 +21,6 @@ const elements = {
     highlightedCode: document.getElementById('highlighted-code'),
     gridEditorContainer: document.getElementById('grid-editor-container'),
     lineNumbers: document.getElementById('line-numbers'),
-    templateSelect: document.getElementById('template-select'),
-    exerciseSelect: document.getElementById('exercise-select'),
-    algorithmSelect: document.getElementById('algorithm-select'),
     toast: document.getElementById('toast'),
     toastMessage: document.getElementById('toast-message')
 };
@@ -184,119 +181,9 @@ function saveCursorPosition() {
 // ============================================
 // DROPDOWN MANAGEMENT
 // ============================================
+// Template / exercise / algorithm dropdowns were removed from the toolbar;
+// content is now loaded through the file browser instead.
 
-function populateDropdownFromData(select, items) {
-    if (!select || !items) return;
-    while (select.options.length > 1) select.remove(1);
-    
-    items.forEach(item => {
-        if (!item.id || item.id === '') return;
-        const option = document.createElement('option');
-        option.value = item.id;
-        option.textContent = item.label;
-        if (item.type === 'separator') {
-            option.disabled = true;
-            option.style.fontWeight = item.style?.fontWeight || 'bold';
-            option.style.color = item.style?.color || '#888';
-        }
-        select.appendChild(option);
-    });
-}
-
-function populateExerciseDropdown() {
-    const content = typeof LanguageManager !== 'undefined' ? LanguageManager.getContent() : null;
-    if (content?.exercises) {
-        populateDropdownFromData(elements.exerciseSelect, content.exercises.getDropdownData());
-    }
-}
-
-function populateAlgorithmDropdown() {
-    const content = typeof LanguageManager !== 'undefined' ? LanguageManager.getContent() : null;
-    if (content?.algorithms) {
-        populateDropdownFromData(elements.algorithmSelect, content.algorithms.getDropdownData());
-    }
-}
-
-function loadTemplate() {
-    const templateKey = elements.templateSelect.value;
-    if (!templateKey || templateKey.startsWith('separator_')) {
-        elements.templateSelect.value = '';
-        return;
-    }
-    
-    const content = typeof LanguageManager !== 'undefined' ? LanguageManager.getContent() : null;
-    const template = content?.templates?.get(templateKey);
-    
-    if (!template) {
-        showToast(`❌ Πρότυπο "${templateKey}" δεν βρέθηκε`, 'error');
-        elements.templateSelect.value = '';
-        return;
-    }
-    
-    if (gridEditor) gridEditor.setValue(template);
-    else { elements.codeEditor.value = template; updateEditor(); }
-    
-    if (typeof Collaboration !== 'undefined' && Collaboration.connected) {
-        Collaboration.sendTemplateLoaded(template, elements.templateSelect.options[elements.templateSelect.selectedIndex].text);
-    }
-    
-    showToast(`📁 Φορτώθηκε: ${elements.templateSelect.options[elements.templateSelect.selectedIndex].text}`, 'success');
-    if (gridEditor) gridEditor.focus(); else elements.codeEditor.focus();
-    elements.templateSelect.value = '';
-}
-
-function loadExercise() {
-    const exerciseId = elements.exerciseSelect.value;
-    if (!exerciseId || exerciseId.startsWith('separator_')) {
-        elements.exerciseSelect.value = '';
-        return;
-    }
-    
-    const content = typeof LanguageManager !== 'undefined' ? LanguageManager.getContent() : null;
-    const exercise = content?.exercises?.get(exerciseId);
-    
-    if (!exercise) {
-        showToast(`❌ Άσκηση "${exerciseId}" δεν βρέθηκε`, 'error');
-        elements.exerciseSelect.value = '';
-        return;
-    }
-    
-    if (gridEditor) gridEditor.setValue(exercise.code);
-    else { elements.codeEditor.value = exercise.code; updateEditor(); }
-    
-    if (typeof Collaboration !== 'undefined' && Collaboration.connected) {
-        Collaboration.sendTemplateLoaded(exercise.code, `🎯 ${exercise.name}`);
-    }
-    
-    showToast(`🎯 Άσκηση: ${exercise.name}`, 'success');
-    if (gridEditor) gridEditor.focus(); else elements.codeEditor.focus();
-    elements.exerciseSelect.value = '';
-}
-
-function loadAlgorithm() {
-    const algorithmId = elements.algorithmSelect.value;
-    if (!algorithmId || algorithmId.startsWith('separator_')) {
-        elements.algorithmSelect.value = '';
-        return;
-    }
-    
-    const content = typeof LanguageManager !== 'undefined' ? LanguageManager.getContent() : null;
-    const result = content?.algorithms?.get(algorithmId);
-    
-    if (result?.code) {
-        if (gridEditor) gridEditor.setValue(result.code);
-        else { elements.codeEditor.value = result.code; updateEditor(); }
-        
-        if (typeof Collaboration !== 'undefined' && Collaboration.connected) {
-            Collaboration.sendTemplateLoaded(result.code, result.name);
-        }
-        showToast(`📖 Αλγόριθμος: ${result.name}`, 'success');
-        if (gridEditor) gridEditor.focus(); else elements.codeEditor.focus();
-    } else {
-        showToast(`❌ Αλγόριθμος δεν βρέθηκε`, 'error');
-    }
-    elements.algorithmSelect.value = '';
-}
 
 // ============================================
 // LEGACY EDITOR KEYDOWN
@@ -331,8 +218,6 @@ function initLanguageDependentUI() {
     }
     
     generateKeywordSidebar();
-    populateExerciseDropdown();
-    populateAlgorithmDropdown();
     console.log('📋 Language-dependent UI initialized');
 }
 
@@ -350,7 +235,14 @@ function init() {
     const urlParams = new URLSearchParams(window.location.search);
     const isTeacher = urlParams.get('role') === 'teacher';
     document.body.classList.add(isTeacher ? 'is-teacher' : 'is-student');
-    
+
+    // Phase 6.A — first-run onboarding wizard (teacher only, fire-and-forget).
+    if (isTeacher && typeof OnboardingWizard !== 'undefined') {
+        OnboardingWizard.checkAndMaybeRun().catch(err =>
+            console.warn('Onboarding check failed:', err)
+        );
+    }
+
     // 1. Initialize UI Manager (theme, shortcuts, toasts)
     if (typeof UIManager !== 'undefined') {
         UIManager.init({ isTeacher });
@@ -365,7 +257,25 @@ function init() {
             tabSize: 3
         });
         gridEditor.setValue('');
-        
+
+        // Phase 4 — install editor extensions (AutoPairs, AutoIndent, etc.).
+        try {
+            if (typeof AutoPairs       !== 'undefined') gridEditor.use(AutoPairs);
+            if (typeof AutoIndent      !== 'undefined') gridEditor.use(AutoIndent);
+            if (typeof BlockComment    !== 'undefined') gridEditor.use(BlockComment);
+            if (typeof SmartPaste      !== 'undefined') gridEditor.use(SmartPaste);
+            if (typeof BracketMatch    !== 'undefined') gridEditor.use(BracketMatch);
+            if (typeof FindReplace     !== 'undefined') gridEditor.use(FindReplace);
+            if (typeof GutterDragSelect!== 'undefined') gridEditor.use(GutterDragSelect);
+            // MultiCursor scaffold: teacher only.
+            if (isTeacher && typeof MultiCursor !== 'undefined') gridEditor.use(MultiCursor);
+            // Restore preferred tab size if user has set one.
+            const savedTab = parseInt(localStorage.getItem('aepp-tab-size'), 10);
+            if (Number.isFinite(savedTab) && savedTab > 0) gridEditor.setTabSize(savedTab);
+        } catch (err) {
+            console.warn('⚠️ Phase 4 editor extensions failed to install:', err);
+        }
+
         // Expose globally for FileBrowser and other modules
         window.gridEditor = gridEditor;
         
@@ -468,10 +378,7 @@ function init() {
         elements.codeEditor.addEventListener('focus', saveCursorPosition);
     }
     
-    // 5. Set up dropdown event listeners
-    if (elements.templateSelect) elements.templateSelect.addEventListener('change', loadTemplate);
-    if (elements.exerciseSelect) elements.exerciseSelect.addEventListener('change', loadExercise);
-    if (elements.algorithmSelect) elements.algorithmSelect.addEventListener('change', loadAlgorithm);
+    // 5. Dropdown event listeners removed — dropdowns no longer exist in the toolbar.
     
     // 6. Initialize FileBrowser (must be before language init so setRoot works)
     if (typeof FileBrowser !== 'undefined') {
@@ -524,6 +431,19 @@ function init() {
         
         const languageSelector = document.getElementById('language-selector');
         if (languageSelector) {
+            // Phase 5.4 — populate from LanguageRegistry instead of hard-coded <option>s.
+            if (typeof LanguageRegistry !== 'undefined') {
+                LanguageRegistry.ready.then(() => {
+                    const langs = LanguageRegistry.list();
+                    if (!langs.length) return;
+                    const currentVal = languageSelector.value;
+                    languageSelector.innerHTML = langs.map(l =>
+                        `<option value="${l.id}">${l.label}</option>`
+                    ).join('');
+                    // Preserve current selection if still available.
+                    if (langs.some(l => l.id === currentVal)) languageSelector.value = currentVal;
+                });
+            }
             languageSelector.addEventListener('change', async (e) => {
                 // User manually changed language - reset the flag so initial code loads
                 if (typeof Collaboration !== 'undefined') {
@@ -547,6 +467,16 @@ function init() {
             const selector = document.getElementById('language-selector');
             if (selector && selector.value !== newLang) {
                 selector.value = newLang;
+            }
+
+            // Update language icon (Phase 5.4)
+            const iconEl = document.getElementById('language-selector-icon');
+            if (iconEl && typeof LanguageRegistry !== 'undefined') {
+                const plugin = LanguageRegistry.get(newLang);
+                if (plugin && plugin.icon) {
+                    iconEl.src = 'public/assets/icons/' + plugin.icon;
+                    iconEl.alt = plugin.label || newLang;
+                }
             }
             
             // Sync language to students (teacher only)
@@ -585,10 +515,8 @@ function init() {
                 }
             }
             
-            // Regenerate keyword sidebar and dropdowns for new language
+            // Regenerate keyword sidebar for new language
             generateKeywordSidebar();
-            populateExerciseDropdown();
-            populateAlgorithmDropdown();
             
             console.log('✅ UI refreshed for language:', newLang);
         });

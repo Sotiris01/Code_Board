@@ -1,0 +1,249 @@
+/* ============================================
+   Status bar (legacy + VS Code style)
+   Generated from styles/legacy.css by scripts/split-css.ps1.
+   ============================================ */
+
+/* ============================================
+   STATUS BAR
+   ============================================ */
+/* ============================================
+   STATUS BAR - VS Code Style
+   ============================================ */
+.status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: var(--statusbar-height);
+    padding: 0 10px;
+    background-color: var(--bg-statusbar);
+    color: var(--text-statusbar);
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 12px;
+    flex-shrink: 0;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.status-left,
+.status-right {
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+
+.status-center {
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+
+/* Status Bar Items - VS Code style with hover and borders */
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 10px;
+    height: var(--statusbar-height);
+    cursor: default;
+    transition: background-color 0.1s ease;
+    border-right: 1px solid rgba(255, 255, 255, 0.15);
+    white-space: nowrap;
+    font-size: 12px;
+}
+
+.status-item:last-child {
+    border-right: none;
+}
+
+.status-item:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+.status-item.clickable {
+    cursor: pointer;
+}
+
+/* Language Badge - Right side accent */
+.status-language {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    padding: 2px 8px !important;
+    height: auto !important;
+    margin-left: 8px;
+}
+
+.status-language:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Network Traffic in status bar */
+#network-upload,
+#network-download {
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
+    font-size: 11px;
+}
+
+#network-upload.high,
+#network-download.high {
+    color: #f48771;
+}
+
+#network-upload.medium,
+#network-download.medium {
+    color: #cca700;
+}
+
+/* Status Alert Animation (for raised hands) */
+@keyframes status-alert-pulse {
+    0%, 100% {
+        background-color: rgba(255, 152, 0, 0.3);
+    }
+    50% {
+        background-color: rgba(255, 152, 0, 0.6);
+    }
+}
+
+.status-alert {
+    animation: status-alert-pulse 1.5s ease-in-out infinite;
+    border-color: #ff9800 !important;
+}
+
+/* Ngrok Stats Display */
+.ngrok-stats {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 10px;
+    height: 100%;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 11px;
+}
+
+.ngrok-stats:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+.ngrok-icon {
+    font-size: 12px;
+}
+
+.ngrok-latency {
+    font-weight: 600;
+    color: #89d185; /* Green for good latency */
+}
+
+.ngrok-latency.warning {
+    color: #cca700; /* Yellow for moderate latency */
+}
+
+.ngrok-latency.critical {
+    color: #f14c4c; /* Red for high latency */
+}
+
+.ngrok-region {
+    opacity: 0.85;
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+}
+
+/* Connection Status */
+.connection-status {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0 8px;
+}
+
+.connection-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #89d185;
+}
+
+.connection-dot.disconnected {
+    background-color: #f14c4c;
+}
+
+.connection-dot.connecting {
+    background-color: #cca700;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Language indicator in status bar */
+.language-indicator {
+    padding: 0 10px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Line/Column display */
+.line-col-display {
+    padding: 0 10px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 11px;
+}
+
+.ngrok-connections {
+    font-weight: 600;
+}
+
+/* Network Traffic Display */
+.network-traffic {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 3px;
+    transition: color 0.3s ease;
+}
+
+.network-traffic.low {
+    color: #7fff7f; /* Green - low traffic */
+}
+
+.network-traffic.medium {
+    color: #ffcc00; /* Yellow - medium traffic */
+}
+
+.network-traffic.high {
+    color: #ff6b6b; /* Red - high traffic */
+}
+
+.separator {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.lang-badge {
+    background-color: rgba(255, 255, 255, 0.2);
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-weight: 600;
+}
+
+.student-info {
+    opacity: 0.9;
+}
+
+
+/* ============================================
+   Phase 3.4 — Status bar overflow on narrow screens
+   Hide the centre cluster below --bp-sm and let the bar scroll horizontally
+   if a teacher still has many items.  A full ⋯-popover lives behind Phase 6
+   (SettingsPanel) — for now scroll + hide preserves all information.
+   ============================================ */
+@media (max-width: 1100px) {
+    .status-bar { overflow-x: auto; flex-wrap: nowrap; }
+    .status-center { display: none; }
+}

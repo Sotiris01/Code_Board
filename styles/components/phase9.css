@@ -1,0 +1,207 @@
+/* =====================================================================
+   Phase 9 — classroom features
+   - 9.1 Tabs bar
+   - 9.2 Hand-raise button + teacher badge
+   - 9.3 Replay modal
+   - 9.4 Worksheet floating panel
+   - 9.6 Mobile read-only adaptations
+   ===================================================================== */
+
+/* --- 9.1 Tabs bar -------------------------------------------------- */
+.tab-bar {
+    display: flex;
+    align-items: stretch;
+    gap: 2px;
+    padding: 4px 8px 0 8px;
+    background: var(--bg-secondary, #252526);
+    border-bottom: 1px solid var(--border-color, #333);
+    overflow-x: auto;
+}
+.tab-bar .tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px 4px 10px;
+    background: var(--bg-primary, #1e1e1e);
+    border: 1px solid var(--border-color, #333);
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text-secondary, #aaa);
+    -webkit-user-select: none;
+    user-select: none;
+    max-width: 200px;
+    white-space: nowrap;
+}
+.tab-bar .tab:hover { background: var(--bg-tertiary, #2c2c2c); color: var(--text-primary, #ddd); }
+.tab-bar .tab.active {
+    background: var(--bg-tertiary, #2c2c2c);
+    color: var(--text-primary, #fff);
+    border-color: var(--accent-color, #007acc);
+}
+.tab-bar .tab .tab-close {
+    background: transparent;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0 2px;
+    opacity: 0.6;
+}
+.tab-bar .tab .tab-close:hover { opacity: 1; color: #e06c75; }
+.tab-bar .tab-add {
+    background: transparent;
+    border: 1px dashed var(--border-color, #555);
+    color: var(--text-secondary, #aaa);
+    border-radius: 4px;
+    padding: 0 10px;
+    cursor: pointer;
+    font-size: 14px;
+}
+.tab-bar .tab-add:hover { color: var(--text-primary, #fff); border-color: var(--accent-color, #007acc); }
+
+/* --- 9.2 Hand-raise -------------------------------------------------- */
+.reaction-btn.hand-raise-btn.active {
+    background: rgba(255, 200, 0, 0.18);
+    box-shadow: 0 0 0 1px rgba(255, 200, 0, 0.5) inset;
+}
+.raised-hands {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    background: rgba(255, 200, 0, 0.15);
+    border: 1px solid rgba(255, 200, 0, 0.4);
+    border-radius: 10px;
+    color: #f0c040;
+    font-size: 12px;
+    margin-right: 8px;
+    cursor: help;
+    white-space: pre-line;
+}
+
+/* --- 9.3 Replay modal --------------------------------------------- */
+.replay-modal-content {
+    width: min(900px, 92vw);
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+.replay-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 16px;
+    overflow: hidden;
+    flex: 1;
+}
+.replay-toolbar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.replay-toolbar select { padding: 3px 6px; }
+.replay-meta {
+    font-size: 12px;
+    color: var(--text-secondary, #aaa);
+}
+#replay-slider { width: 100%; }
+#replay-view {
+    background: var(--bg-primary, #1e1e1e);
+    color: var(--text-primary, #d4d4d4);
+    border: 1px solid var(--border-color, #333);
+    border-radius: 4px;
+    padding: 10px;
+    margin: 0;
+    overflow: auto;
+    flex: 1;
+    min-height: 200px;
+    max-height: 50vh;
+    font-family: 'Cascadia Code', Consolas, monospace;
+    font-size: 12px;
+    white-space: pre;
+    tab-size: 4;
+}
+
+/* --- 9.4 Worksheet panel ------------------------------------------ */
+.worksheet-panel {
+    position: fixed;
+    right: 16px;
+    bottom: 56px;
+    width: min(420px, 90vw);
+    height: min(420px, 60vh);
+    background: var(--bg-secondary, #252526);
+    border: 1px solid var(--border-color, #444);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    display: flex;
+    flex-direction: column;
+    z-index: 900;
+}
+.worksheet-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-color, #333);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary, #ddd);
+}
+.worksheet-status {
+    margin-left: auto;
+    font-weight: normal;
+    font-size: 11px;
+    color: var(--text-secondary, #888);
+}
+.worksheet-close {
+    background: transparent;
+    border: none;
+    color: inherit;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 4px;
+}
+.worksheet-close:hover { color: #e06c75; }
+#worksheet-textarea {
+    flex: 1;
+    width: 100%;
+    box-sizing: border-box;
+    border: none;
+    background: var(--bg-primary, #1e1e1e);
+    color: var(--text-primary, #d4d4d4);
+    font-family: 'Cascadia Code', Consolas, monospace;
+    font-size: 13px;
+    padding: 10px;
+    resize: none;
+    outline: none;
+}
+
+/* --- 9.6 Mobile read-only ----------------------------------------- */
+@media (max-width: 768px) {
+    body[data-role="student"] .editor-container .code-area,
+    body[data-role="student"] #grid-editor-container,
+    body[data-role="student"] #code-editor {
+        pointer-events: none;
+        user-select: text;
+        -webkit-user-select: text;
+    }
+    body[data-role="student"] .btn-text { display: none; }
+    body[data-role="student"] .editor-container {
+        font-size: 16px;
+    }
+    body[data-role="student"] #grid-editor-container,
+    body[data-role="student"] #code-editor {
+        font-size: 15px !important;
+    }
+    /* Reactions: bigger touch targets */
+    .reaction-btn { min-width: 44px; min-height: 44px; font-size: 22px; }
+    .worksheet-panel {
+        right: 8px; left: 8px; width: auto; bottom: 8px;
+    }
+    .tab-bar .tab { font-size: 13px; padding: 6px 10px; }
+}

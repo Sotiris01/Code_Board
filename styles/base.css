@@ -1,0 +1,12 @@
+/* ============================================
+   App container shell
+   Generated from styles/legacy.css by scripts/split-css.ps1.
+   ============================================ */
+
+/* App Container */
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}

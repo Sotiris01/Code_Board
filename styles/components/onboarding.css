@@ -1,0 +1,187 @@
+/* Phase 6.A — First-run onboarding wizard. */
+
+.onboarding-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(4px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    animation: onb-fade 160ms ease-out;
+}
+@keyframes onb-fade { from { opacity: 0; } to { opacity: 1; } }
+
+.onboarding-card {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+    width: 100%;
+    max-width: 560px;
+    max-height: calc(100vh - 32px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.onboarding-header {
+    padding: 20px 24px 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+.onboarding-header h2 {
+    margin: 0 0 4px 0;
+    font-size: 20px;
+    font-weight: 600;
+}
+.onboarding-progress {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+.onboarding-bar {
+    height: 4px;
+    background: var(--bg-tertiary);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.onboarding-bar-fill {
+    height: 100%;
+    background: var(--accent-color, #3b82f6);
+    transition: width 200ms ease-out;
+}
+
+.onboarding-body {
+    padding: 20px 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.onb-lead {
+    margin: 0 0 16px 0;
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.onb-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 12px;
+}
+.onb-field span {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+.onb-field input,
+.onb-field select {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 14px;
+    font-family: inherit;
+}
+.onb-field input:focus,
+.onb-field select:focus {
+    outline: none;
+    border-color: var(--accent-color, #3b82f6);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.onb-radio {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: background 120ms;
+}
+.onb-radio:hover { background: var(--bg-tertiary); }
+.onb-radio input { margin-top: 3px; flex-shrink: 0; }
+.onb-radio span { font-size: 14px; line-height: 1.4; }
+.onb-radio small { color: var(--text-secondary); font-size: 12px; }
+
+.onb-radio-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 8px;
+}
+.onb-radio-grid .onb-radio { margin-bottom: 0; }
+
+.onb-ngrok-fields {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border-color);
+}
+.onb-hint {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin: 8px 0 0 0;
+    line-height: 1.4;
+}
+.onb-hint code {
+    background: var(--bg-tertiary);
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-size: 11px;
+}
+
+.onb-summary {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.onb-summary li {
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 13px;
+}
+.onb-summary li:last-child { border-bottom: none; }
+
+.onb-error {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.5);
+    color: #ef4444;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-top: 12px;
+    font-size: 13px;
+}
+
+.onboarding-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 14px 24px;
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+}
+.onb-btn {
+    padding: 8px 18px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border-color);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    transition: background 120ms, opacity 120ms;
+}
+.onb-btn:hover:not(:disabled) { background: var(--bg-secondary); }
+.onb-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.onb-btn-primary {
+    background: var(--accent-color, #3b82f6);
+    border-color: var(--accent-color, #3b82f6);
+    color: #fff;
+}
+.onb-btn-primary:hover:not(:disabled) { filter: brightness(1.1); background: var(--accent-color, #3b82f6); }

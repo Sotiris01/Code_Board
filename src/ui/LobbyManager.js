@@ -38,8 +38,20 @@ const LobbyManager = {
         
         this._bindEvents();
         this._loadTeacherInfo();
+        this._setPlaceholderDots();
         
         console.log('🚪 LobbyManager initialized');
+    },
+    
+    /**
+     * Render the placeholder as one bullet per allowed character,
+     * derived from the input's maxlength attribute.
+     */
+    _setPlaceholderDots() {
+        const input = this.elements.codeInput;
+        if (!input) return;
+        const n = Math.max(1, parseInt(input.getAttribute('maxlength'), 10) || 4);
+        input.placeholder = Array(n).fill('•').join(' ');
     },
     
     /**

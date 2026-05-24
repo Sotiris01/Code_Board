@@ -1,0 +1,104 @@
+/* ============================================
+   Keyword groups + buttons
+   Generated from styles/legacy.css by scripts/split-css.ps1.
+   ============================================ */
+
+/* ============================================
+   KEYWORD GROUPS & BUTTONS
+   ============================================ */
+.keyword-group {
+    margin-bottom: 12px;
+}
+
+.group-title {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--accent-blue);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    padding: 4px 8px;
+    background-color: rgba(86, 156, 214, 0.1);
+    border-radius: 4px;
+}
+
+.keyword-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.keyword-btn {
+    font-family: var(--font-code);
+    font-size: 0.65rem;
+    font-weight: 500;
+    padding: 4px 7px;
+    background-color: var(--bg-tertiary);
+    color: var(--syntax-keyword);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+}
+
+.keyword-btn:hover {
+    background-color: var(--accent-blue);
+    color: white;
+    border-color: var(--accent-blue);
+    transform: scale(1.02);
+}
+
+.keyword-btn:active {
+    transform: scale(0.98);
+}
+
+/* Keyword button variations */
+.keyword-btn.keyword-io {
+    color: var(--accent-yellow);
+    border-color: rgba(220, 220, 170, 0.3);
+}
+
+.keyword-btn.keyword-io:hover {
+    background-color: var(--accent-yellow);
+    color: #1e1e1e;
+}
+
+.keyword-btn.keyword-op {
+    color: var(--accent-purple);
+    border-color: rgba(197, 134, 192, 0.3);
+}
+
+.keyword-btn.keyword-op:hover {
+    background-color: var(--accent-purple);
+    color: white;
+}
+
+.keyword-btn.keyword-fn {
+    color: var(--accent-green);
+    border-color: rgba(78, 201, 176, 0.3);
+}
+
+.keyword-btn.keyword-fn:hover {
+    background-color: var(--accent-green);
+    color: #1e1e1e;
+}
+
+/* Scrollbar for sidebar */
+.sidebar-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.sidebar-content::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+.sidebar-content::-webkit-scrollbar-thumb {
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+}
+
+.sidebar-content::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+

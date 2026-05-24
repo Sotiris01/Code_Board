@@ -83,7 +83,10 @@ const FileBrowser = {
         document.querySelectorAll('.sidebar-panel').forEach(panel => {
             panel.classList.toggle('active', panel.id === `${panelId}-panel`);
         });
-        
+
+        // Notify SidebarResizer (Phase 3.2) so it can restore the per-panel width.
+        window.dispatchEvent(new CustomEvent('sidebarPanelChanged', { detail: { panelId } }));
+
         // Load files if switching to files panel
         if (panelId === 'files') {
             this.loadFolder(this.currentPath);

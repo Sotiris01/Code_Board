@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Code Board - Code Teaching Board</title>
-    <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="styles.css?v=41">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="styles/main.css?v=49">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <!-- Markdown Parser (marked.js) -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -50,7 +50,7 @@
                         id="lobby-code-input" 
                         class="lobby-code-input" 
                         maxlength="4" 
-                        placeholder="• • • •"
+                        placeholder=""
                         inputmode="numeric"
                         pattern="[0-9]*"
                         autocomplete="off"
@@ -72,7 +72,7 @@
         <!-- Header / Toolbar -->
         <header class="toolbar">
             <div class="toolbar-left">
-                <h1 class="app-title">📝 Code Board</h1>
+                <h1 class="app-title"><span class="app-title-icon" aria-hidden="true">📝</span><span class="app-title-text">Code Board</span></h1>
                 
                 <!-- Mode Toggle Buttons -->
                 <div class="mode-toggle">
@@ -93,6 +93,7 @@
                 <!-- Language Selector -->
                 <div class="language-selector-container">
                     <label for="language-selector" class="language-label">Language:</label>
+                    <img id="language-selector-icon" class="language-icon" src="public/assets/icons/glossa.svg" alt="" width="20" height="20">
                     <select id="language-selector" class="language-selector" title="Select programming language">
                         <option value="glossa" selected>ΓΛΩΣΣΑ</option>
                         <option value="python">Python</option>
@@ -147,16 +148,46 @@
                 <button id="theme-toggle-btn" class="btn btn-icon-only" title="Change Theme (Ctrl+Shift+T)">
                     <span class="btn-icon theme-icon">🌙</span>
                 </button>
-                
+
+                <!-- Soft-wrap Toggle (Phase 3.3) -->
+                <button id="toggle-wrap-btn" class="btn btn-icon-only" title="Toggle Soft Wrap (Alt+Z)">
+                    <span class="btn-icon">↩</span>
+                </button>
+
                 <!-- Keyboard Shortcuts Help -->
                 <button id="shortcuts-help-btn" class="btn btn-icon-only" title="Keyboard Shortcuts (F1)">
                     <span class="btn-icon">❓</span>
+                </button>
+
+                <!-- Settings (Phase 6.B, teacher only) -->
+                <button id="settings-btn" class="btn btn-icon-only teacher-only" title="Settings (Ctrl+,)" style="display: none;">
+                    <span class="btn-icon">⚙</span>
                 </button>
                 
                 <!-- Code Management -->
                 <button id="copy-btn" class="btn btn-action" title="Copy Code (Ctrl+Shift+C)">
                     <span class="btn-icon">📋</span>
                     <span class="btn-text">Copy</span>
+                </button>
+                <!-- Phase 9.7: Run code (teacher only) -->
+                <button id="run-btn" class="btn btn-action teacher-only" title="Run code in external playground">
+                    <span class="btn-icon">▶</span>
+                    <span class="btn-text">Run</span>
+                </button>
+                <!-- Phase 9.3: Lesson replay (teacher only) -->
+                <button id="replay-btn" class="btn btn-action teacher-only" title="Replay a saved session">
+                    <span class="btn-icon">⏯</span>
+                    <span class="btn-text">Replay</span>
+                </button>
+                <!-- Phase 9.1: Multi-tab editor toggle (teacher only) -->
+                <button id="tabs-toggle-btn" class="btn btn-action teacher-only" title="Show/hide editor tabs">
+                    <span class="btn-icon">🗂</span>
+                    <span class="btn-text">Tabs</span>
+                </button>
+                <!-- Phase 9.4: Private worksheet (student only) -->
+                <button id="worksheet-btn" class="btn btn-action student-only" title="Open private worksheet">
+                    <span class="btn-icon">📝</span>
+                    <span class="btn-text">Worksheet</span>
                 </button>
                 <button id="clear-btn" class="btn btn-danger" title="Clear Board">
                     <span class="btn-icon">🗑️</span>
@@ -167,6 +198,8 @@
 
         <!-- Main Editor Area -->
         <main class="editor-container">
+            <!-- Phase 9.1: Multi-tab editor strip (teacher only, hidden by default) -->
+            <div id="tab-bar" class="tab-bar teacher-only" style="display: none;"></div>
             <div class="editor-wrapper">
                 <!-- Line Numbers (Code mode) -->
                 <div id="line-numbers" class="line-numbers">
@@ -329,7 +362,13 @@
                     <button class="reaction-btn" data-reaction="understood" title="Understood">✅</button>
                     <button class="reaction-btn" data-reaction="confused" title="Confused">❓</button>
                     <button class="reaction-btn" data-reaction="repeat" title="Repeat">🔄</button>
+                    <!-- Phase 9.2: Hand-raise with optional note -->
+                    <button id="hand-raise-btn" class="reaction-btn hand-raise-btn" title="Raise hand">✋</button>
                 </div>
+                <!-- Teacher: Raised hands badge (Phase 9.2) -->
+                <span id="raised-hands" class="raised-hands teacher-only" style="display: none;" title="Raised hands">
+                    ✋ <span id="raised-hands-count">0</span>
+                </span>
                 <!-- Teacher: Reaction Counts -->
                 <div id="reaction-counts" class="reaction-counts teacher-only" style="display: none;">
                     <span class="reaction-count" data-reaction="understood">✅ <span>0</span></span>
@@ -345,6 +384,43 @@
     <!-- Toast Notification -->
     <div id="toast" class="toast hidden">
         <span id="toast-message"></span>
+    </div>
+
+    <!-- Phase 9.4: Private Worksheet Panel (student) -->
+    <div id="worksheet-panel" class="worksheet-panel" style="display: none;">
+        <div class="worksheet-header">
+            <span>📝 Private worksheet</span>
+            <span class="worksheet-status" id="worksheet-status">saved</span>
+            <button id="worksheet-close" class="worksheet-close" title="Close">&times;</button>
+        </div>
+        <textarea id="worksheet-textarea" spellcheck="false"
+                  placeholder="Notes only you and the server can see. Auto-saved."></textarea>
+    </div>
+
+    <!-- Phase 9.3: Replay Modal (teacher) -->
+    <div id="replay-modal" class="modal hidden">
+        <div class="modal-overlay"></div>
+        <div class="modal-content replay-modal-content">
+            <div class="modal-header">
+                <h3>⏯ Lesson replay</h3>
+                <button class="modal-close" id="replay-modal-close">&times;</button>
+            </div>
+            <div class="replay-body">
+                <div class="replay-toolbar">
+                    <label>Session:
+                        <select id="replay-session-select"></select>
+                    </label>
+                    <button id="replay-load" class="btn btn-action">Load</button>
+                    <button id="replay-play" class="btn btn-action" disabled>▶ Play</button>
+                    <button id="replay-step" class="btn btn-action" disabled>Step</button>
+                    <button id="replay-reset" class="btn btn-action" disabled>⟲ Reset</button>
+                    <a id="replay-export" class="btn btn-action" target="_blank" rel="noopener" style="display:none;">⬇ Export HTML</a>
+                </div>
+                <input type="range" id="replay-slider" min="0" value="0" disabled />
+                <div class="replay-meta"><span id="replay-info">No session loaded</span></div>
+                <pre id="replay-view"></pre>
+            </div>
+        </div>
     </div>
     
     <!-- Keyboard Shortcuts Modal -->
@@ -397,12 +473,28 @@
 
     <!-- Core Engine -->
     <script src="src/core/LanguageManager.js?v=3"></script>
+    <script src="src/core/LanguageRegistry.js?v=1"></script>
+    <!-- Phase 5 — per-language plugin descriptors (self-register on load). -->
+    <script src="src/languages/glossa/plugin.js?v=1"></script>
+    <script src="src/languages/python/plugin.js?v=1"></script>
+    <script src="src/languages/cpp/plugin.js?v=1"></script>
+    <script src="src/languages/java/plugin.js?v=1"></script>
     <script src="src/core/SmartInserter.js?v=2"></script>
     
     <!-- UI Components -->
     <script src="src/components/UIManager.js?v=2"></script>
     <script src="src/components/SyntaxHighlighter.js?v=1"></script>
-    <script src="src/components/GridEditor.js?v=27"></script>
+    <script src="src/components/GridEditor.js?v=28"></script>
+
+    <!-- Phase 4 — editor input plugins -->
+    <script src="src/editor/input/AutoPairs.js?v=2"></script>
+    <script src="src/editor/input/AutoIndent.js?v=1"></script>
+    <script src="src/editor/input/BlockComment.js?v=1"></script>
+    <script src="src/editor/input/SmartPaste.js?v=1"></script>
+    <script src="src/editor/input/BracketMatch.js?v=1"></script>
+    <script src="src/editor/input/FindReplace.js?v=1"></script>
+    <script src="src/editor/input/MultiCursor.js?v=1"></script>
+    <script src="src/editor/input/GutterDragSelect.js?v=1"></script>
     <script src="src/components/PdfViewer.js?v=3"></script>
     <script src="src/components/MarkdownViewer.js?v=1"></script>
     <script src="src/components/FileBrowser.js?v=2"></script>
@@ -414,10 +506,19 @@
     <script src="src/ui/StatusBar.js?v=2"></script>
     <script src="src/ui/LayoutManager.js?v=1"></script>
     <script src="src/ui/LobbyManager.js?v=1"></script>
+    <script src="src/ui/OnboardingWizard.js?v=1"></script>
+    <script src="src/ui/SettingsDialog.js?v=1"></script>
+    <!-- Phase 9 UI -->
+    <script src="src/core/RunnerRegistry.js?v=1"></script>
+    <script src="src/ui/RunButton.js?v=1"></script>
+    <script src="src/ui/HandRaise.js?v=1"></script>
+    <script src="src/ui/WorksheetPanel.js?v=1"></script>
+    <script src="src/ui/ReplayModal.js?v=1"></script>
+    <script src="src/ui/TabsBar.js?v=1"></script>
     
     <!-- Modules -->
     <script src="src/modules/FileTransfer.js?v=3"></script>
-    <script src="src/modules/Collaboration.js?v=53"></script>
+    <script src="src/modules/Collaboration.js?v=55"></script>
     
     <!-- Main Application Bootstrap -->
     <script src="src/main.js?v=1"></script>

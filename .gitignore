@@ -6,8 +6,19 @@ node_modules/
 .env.local
 .env.*.local
 
-# Session state (local persistence)
+# Session state (legacy location, kept for old clones)
 .session-state.json
+
+# Runtime-editable data (settings, session state, ngrok token).
+# Keep the folder tracked, ignore its contents except teacher-info.json
+# (which still ships sensible defaults until the in-app Settings UI lands in Phase 6).
+data/*
+!data/.gitkeep
+!data/teacher-info.json
+
+# Per-session uploads (auto-created on every server run)
+uploads/*
+!uploads/.gitkeep
 
 # Debug logs
 npm-debug.log*

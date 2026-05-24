@@ -1,0 +1,85 @@
+/* ============================================
+   Design tokens (dark defaults + high-contrast)
+   Generated from styles/legacy.css by scripts/split-css.ps1.
+   ============================================ */
+
+:root {
+    /* Colors - VS Code Dark Theme Inspired */
+    --bg-primary: #1e1e1e;
+    --bg-secondary: #252526;
+    --bg-tertiary: #2d2d30;
+    --bg-editor: #1e1e1e;
+    --bg-line-numbers: #1e1e1e;
+    
+    /* Activity Bar & Sidebar */
+    --bg-activity-bar: #333333;
+    --bg-sidebar: #252526;
+    --bg-sidebar-header: #383838;
+    --activity-icon-active: #ffffff;
+    --activity-icon-inactive: #858585;
+    --activity-indicator: #007acc;
+    
+    /* Status Bar */
+    --bg-statusbar: #007acc;
+    --text-statusbar: #ffffff;
+    
+    --text-primary: #d4d4d4;
+    --text-secondary: #858585;
+    --text-muted: #6e6e6e;
+    
+    --accent-blue: #569cd6;
+    --accent-purple: #c586c0;
+    --accent-green: #4ec9b0;
+    --accent-orange: #ce9178;
+    --accent-yellow: #dcdcaa;
+    --accent-red: #f44747;
+    
+    --border-color: #3c3c3c;
+    --highlight-line: #264f78;
+    
+    /* Syntax Highlighting Colors */
+    --syntax-keyword: #569cd6;
+    --syntax-control: #c586c0;
+    --syntax-string: #ce9178;
+    --syntax-comment: #6a9955;
+    --syntax-number: #b5cea8;
+    --syntax-operator: #d4d4d4;
+    --syntax-function: #dcdcaa;
+    
+    /* Spacing */
+    --toolbar-height: 50px;
+    --statusbar-height: 24px;
+    --activity-bar-width: 48px;
+    --sidebar-width: 280px;
+    --line-number-width: 50px;
+    
+    /* Typography - Dyslexia Friendly Defaults */
+    --font-code: 'JetBrains Mono', 'Consolas', 'Courier New', monospace;
+    --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-size-default: 18px;
+    --line-height: 1.6;
+    --row-height: 29px; /* Shared row height for line numbers and grid editor */
+    
+    /* Transitions */
+    --transition-fast: 0.15s ease;
+    --transition-normal: 0.25s ease;
+
+    /* Responsive breakpoints (Phase 3) — referenced by JS via getComputedStyle */
+    --bp-sm: 1100px;
+    --bp-md: 1440px;
+    --bp-lg: 1920px;
+
+    /* Editor sizing (Phase 3) */
+    --editor-min-width: 60ch;
+}
+
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+    :root {
+        --bg-primary: #000;
+        --bg-secondary: #111;
+        --text-primary: #fff;
+        --border-color: #666;
+    }
+}

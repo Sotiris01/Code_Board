@@ -1,0 +1,33 @@
+/* ============================================
+   Code Board — main stylesheet (barrel)
+   Loads the modular CSS split from legacy.css (Phase 2 of the redesign roadmap).
+   Order matters: tokens → themes → reset → base → layout → components.
+   ============================================ */
+
+@import 'tokens.css';
+@import 'themes/dark.css';
+@import 'themes/light.css';
+
+@import 'reset.css';
+@import 'base.css';
+
+@import 'layout/toolbar.css';
+@import 'layout/sidebar.css';
+@import 'layout/footer.css';
+
+@import 'components/editor.css';
+@import 'components/syntax.css';
+@import 'components/toast.css';
+@import 'components/modal.css';
+@import 'components/keywords.css';
+@import 'components/file-tree.css';
+@import 'components/shared-files.css';
+@import 'components/collaboration.css';
+@import 'components/viewers.css';
+@import 'components/role-visibility.css';
+@import 'components/reactions.css';
+@import 'components/session.css';
+@import 'components/lobby.css';
+@import 'components/onboarding.css';
+@import 'components/settings.css';
+@import 'components/phase9.css';
